@@ -1,8 +1,8 @@
 workflows:
   ios-sim-preview:
     name: iOS Preview for Appetize
-    max_build_duration: 60
     instance_type: mac_mini_m2
+    max_build_duration: 60
 
     environment:
       flutter: stable
@@ -18,13 +18,18 @@ workflows:
           pod install
           cd ..
 
-      - name: Build iOS simulator app
+      - name: Show Xcode schemes (for debugging)
+        script: |
+          xcodebuild -list -workspace ios/Runner.xcworkspace
+
+      - name: Build iOS simulator app using xcodebuild
         script: |
           xcodebuild \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -sdk iphonesimulator \
             -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 14' \
             -derivedDataPath build/ios_sim_output
 
       - name: Zip .app for Appetize
