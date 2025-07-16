@@ -16,25 +16,29 @@ class _AlertsPageState extends State<AlertsPage> {
       'title': 'Welcome to New Inbox',
       'date': DateTime(2022, 12, 7),
       'preview': 'Check your inbox for important info...',
+      'read': false,
     },
     {
       'title': 'System Update Notice',
       'date': DateTime(2022, 12, 8),
       'preview': 'A new system update is available.',
+      'read': false,
     },
     {
       'title': 'Tesla Annual Report',
       'date': DateTime(2022, 12, 5),
       'preview': 'View the new 2022 Tesla performance data.',
+      'read': false,
     },
   ];
 
   List<Map<String, dynamic>> filteredAlerts = [];
+  int? selectedIndex;
 
   @override
   void initState() {
     super.initState();
-    filteredAlerts = List.from(allAlerts); // make a copy
+    filteredAlerts = List.from(allAlerts);
   }
 
   void _sortAlerts(String order) {
@@ -47,8 +51,63 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  void _openDetail(int index) {
+    setState(() {
+      filteredAlerts[index] = {...filteredAlerts[index], 'read': true};
+      selectedIndex = index;
+    });
+  }
+
+  void _goBack() {
+    setState(() {
+      selectedIndex = null;
+    });
+  }
+
+  void _markAsUnread(int index) {
+    setState(() {
+      filteredAlerts[index] = {...filteredAlerts[index], 'read': false};
+      selectedIndex = null;
+    });
+  }
+
+  void _goToNextAlert() {
+    if (selectedIndex != null && selectedIndex! < filteredAlerts.length - 1) {
+      setState(() {
+        selectedIndex = selectedIndex! + 1;
+        filteredAlerts[selectedIndex!] = {
+          ...filteredAlerts[selectedIndex!],
+          'read': true
+        };
+      });
+    }
+  }
+
+  void _goToPreviousAlert() {
+    if (selectedIndex != null && selectedIndex! > 0) {
+      setState(() {
+        selectedIndex = selectedIndex! - 1;
+        filteredAlerts[selectedIndex!] = {
+          ...filteredAlerts[selectedIndex!],
+          'read': true
+        };
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (selectedIndex != null) {
+      return MessageDetailPage(
+        alerts: filteredAlerts,
+        currentIndex: selectedIndex!,
+        onBack: _goBack,
+        onMarkAsUnread: () => _markAsUnread(selectedIndex!),
+        onNext: _goToNextAlert,
+        onPrevious: _goToPreviousAlert,
+      );
+    }
+
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
@@ -81,23 +140,31 @@ class _AlertsPageState extends State<AlertsPage> {
               itemBuilder: (context, index) {
                 final alert = filteredAlerts[index];
                 return ListTile(
-                  leading: const Icon(Icons.electric_car, size: 32),
+                  leading: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      const Icon(Icons.electric_car, size: 32),
+                      if (!alert['read'])
+                        Positioned(
+                          top: 4,
+                          right: 0,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                   title: Text(alert['title']),
                   subtitle: Text(alert['preview']),
                   trailing: Text(
                     '${alert['date'].month}/${alert['date'].day}/${alert['date'].year}',
                   ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MessageDetailPage(
-                          alerts: filteredAlerts,
-                          currentIndex: index,
-                        ),
-                      ),
-                    );
-                  },
+                  onTap: () => _openDetail(index),
                 );
               },
             ),
