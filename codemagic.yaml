@@ -1,9 +1,44 @@
 workflows:
-    android-workflow-id:
-        name: Android Sample Workflow
-        # .......    
-        # .......
-        # .......  
-    ios-workflow-id:
-        name: iOS Sample Workflow
-        # ......
+  ios-sim-preview:
+    name: iOS Preview for Appetize
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        - appetize_credentials
+
+    scripts:
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Build iOS simulator app
+        script: |
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build/ios_sim_output
+
+      - name: Zip .app for Appetize
+        script: |
+          cd build/ios_sim_output/Build/Products/Debug-iphonesimulator
+          zip -r app.zip Runner.app
+
+      - name: Upload to Appetize.io
+        script: |
+          curl --location --request POST "https://api.appetize.io/v1/apps" \
+            --header "Authorization: Bearer $APPETIZE_API_TOKEN" \
+            --form "file=@build/ios_sim_output/Build/Products/Debug-iphonesimulator/app.zip" \
+            --form "platform=ios" \
+            --form "note=NgMar Flutter App"
+
+    artifacts:
+      - build/ios_sim_output/Build/Products/Debug-iphonesimulator/app.zip
