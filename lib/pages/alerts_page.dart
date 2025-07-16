@@ -3,6 +3,7 @@ import 'detail_pages/message_detail_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
+// The main page to display alerts
 class AlertsPage extends StatefulWidget {
   const AlertsPage({super.key});
 
@@ -10,6 +11,7 @@ class AlertsPage extends StatefulWidget {
   State<AlertsPage> createState() => _AlertsPageState();
 }
 
+// Creating alerts and displaying them
 class _AlertsPageState extends State<AlertsPage> {
   final List<Map<String, dynamic>> allAlerts = [
     {
@@ -32,6 +34,7 @@ class _AlertsPageState extends State<AlertsPage> {
     },
   ];
 
+  // List of alerts filtered by sorted order
   List<Map<String, dynamic>> filteredAlerts = [];
   int? selectedIndex;
 
@@ -41,6 +44,7 @@ class _AlertsPageState extends State<AlertsPage> {
     filteredAlerts = List.from(allAlerts);
   }
 
+  // Sorts the alerts based on newest or oldest
   void _sortAlerts(String order) {
     setState(() {
       if (order == 'newest') {
@@ -51,6 +55,7 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  // Opens a specific alert
   void _openDetail(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': true};
@@ -58,12 +63,14 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  // Goes back to the main alerts list
   void _goBack() {
     setState(() {
       selectedIndex = null;
     });
   }
 
+  // Marks an alert as unread
   void _markAsUnread(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': false};
@@ -71,6 +78,7 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  // Navigates to the next alert (right arrow)
   void _goToNextAlert() {
     if (selectedIndex != null && selectedIndex! < filteredAlerts.length - 1) {
       setState(() {
@@ -83,6 +91,7 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
+  // Navigates to the previous alert (left arrow)
   void _goToPreviousAlert() {
     if (selectedIndex != null && selectedIndex! > 0) {
       setState(() {
@@ -95,6 +104,7 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
+  // Alert detail page contains a bottom navigation bar
   @override
   Widget build(BuildContext context) {
     if (selectedIndex != null) {
@@ -108,6 +118,7 @@ class _AlertsPageState extends State<AlertsPage> {
       );
     }
 
+    // Displaying the list of alerts
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(

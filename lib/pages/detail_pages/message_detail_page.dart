@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 const darkBackground = Color(0xFF121212);
 
+// The main page for alert displaying
 class MessageDetailPage extends StatelessWidget {
   final List<Map<String, dynamic>> alerts;
   final int currentIndex;
@@ -10,6 +11,7 @@ class MessageDetailPage extends StatelessWidget {
   final VoidCallback onNext;
   final VoidCallback onPrevious;
 
+  // Takes a list of alert buttons
   const MessageDetailPage({
     super.key,
     required this.alerts,
@@ -20,10 +22,11 @@ class MessageDetailPage extends StatelessWidget {
     required this.onPrevious,
   });
 
+  // Builds the detail page for a specific alert
   @override
   Widget build(BuildContext context) {
     final alert = alerts[currentIndex];
-
+    
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(

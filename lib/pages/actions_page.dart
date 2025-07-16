@@ -6,6 +6,7 @@ const darkBackground = Color(0xFF121212);
 class ActionsPage extends StatelessWidget {
   const ActionsPage({super.key});
 
+  // Creates a list of actions and displays them
   @override
   Widget build(BuildContext context) {
     return Scaffold(

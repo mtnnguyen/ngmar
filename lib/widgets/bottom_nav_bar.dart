@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+// The bottom navigation bar with different pages
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
   const BottomNavBar({super.key, required this.currentIndex, this.onTap});
 
+  // The three icons added to the bottom navigation bar (alerts, actions, events)
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
