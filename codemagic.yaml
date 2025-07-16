@@ -15,6 +15,10 @@ workflows:
       - name: Get Flutter dependencies
         script: flutter pub get
 
+      - name: Show available Xcode schemes
+        script: |
+          xcodebuild -list -project ios/Runner.xcodeproj
+
       - name: Build iOS simulator app using xcodebuild
         script: |
           xcodebuild \
