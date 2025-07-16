@@ -12,20 +12,13 @@ workflows:
         - appetize_credentials
 
     scripts:
-      - name: Install CocoaPods
-        script: |
-          cd ios
-          pod install
-          cd ..
-
-      - name: Show Xcode schemes (for debugging)
-        script: |
-          xcodebuild -list -workspace ios/Runner.xcworkspace
+      - name: Get Flutter dependencies
+        script: flutter pub get
 
       - name: Build iOS simulator app using xcodebuild
         script: |
           xcodebuild \
-            -workspace ios/Runner.xcworkspace \
+            -project ios/Runner.xcodeproj \
             -scheme Runner \
             -sdk iphonesimulator \
             -configuration Debug \
