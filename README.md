@@ -1,3 +1,3 @@
 # inbox_app_modular
 
-A Flutter Inbox App that reveals alerts, actions, and events
+A Flutter Inbox App that reveals alerts, actions, and events for iOS and Android 
