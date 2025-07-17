@@ -162,7 +162,7 @@ class _AlertsPageState extends State<AlertsPage> {
           tooltip: 'Sort Alerts',
         ),
 
-        // ✅ Menu icon on the RIGHT
+        // Menu icon on the RIGHT
         actions: [
           IconButton(
             icon: const Icon(Icons.menu),
