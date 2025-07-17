@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'detail_pages/message_detail_page.dart';
+import 'menu_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
@@ -33,6 +34,9 @@ class _AlertsPageState extends State<AlertsPage> {
       'read': false,
     },
   ];
+
+  // Used to position the filter popup correctly
+  final GlobalKey _filterKey = GlobalKey();
 
   // List of alerts filtered by sorted order
   List<Map<String, dynamic>> filteredAlerts = [];
@@ -124,23 +128,51 @@ class _AlertsPageState extends State<AlertsPage> {
       appBar: AppBar(
         centerTitle: true,
         title: const Text('Alerts'),
+
+        // ✅ Filter icon on the LEFT with dynamic popup position
+        leading: IconButton(
+          key: _filterKey,
+          icon: const Icon(Icons.filter_list),
+          onPressed: () async {
+            final RenderBox button =
+                _filterKey.currentContext!.findRenderObject() as RenderBox;
+            final RenderBox overlay =
+                Overlay.of(context).context.findRenderObject() as RenderBox;
+            final Offset position =
+                button.localToGlobal(Offset.zero, ancestor: overlay);
+
+            final RelativeRect positionRect = RelativeRect.fromLTRB(
+              position.dx,
+              position.dy + button.size.height,
+              overlay.size.width - position.dx - button.size.width,
+              0,
+            );
+
+            final selected = await showMenu<String>(
+              context: context,
+              position: positionRect,
+              items: const [
+                PopupMenuItem(value: 'newest', child: Text('Newest to Oldest')),
+                PopupMenuItem(value: 'oldest', child: Text('Oldest to Newest')),
+              ],
+            );
+
+            if (selected != null) _sortAlerts(selected);
+          },
+          tooltip: 'Sort Alerts',
+        ),
+
+        // ✅ Menu icon on the RIGHT
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () async {
-              final selected = await showMenu<String>(
-                context: context,
-                position: RelativeRect.fromLTRB(1000, 80, 10, 100),
-                items: [
-                  const PopupMenuItem(
-                      value: 'newest', child: Text('Newest to Oldest')),
-                  const PopupMenuItem(
-                      value: 'oldest', child: Text('Oldest to Newest')),
-                ],
+            icon: const Icon(Icons.menu),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MenuPage()),
               );
-              if (selected != null) _sortAlerts(selected);
             },
-            tooltip: 'Sort Alerts',
+            tooltip: 'Menu',
           ),
         ],
       ),
@@ -154,7 +186,8 @@ class _AlertsPageState extends State<AlertsPage> {
                   leading: Stack(
                     alignment: Alignment.center,
                     children: [
-                      const Icon(Icons.electric_car, size: 32),
+                      const Icon(Icons.notification_important,
+                          color: Colors.amber, size: 32),
                       if (!alert['read'])
                         Positioned(
                           top: 4,
