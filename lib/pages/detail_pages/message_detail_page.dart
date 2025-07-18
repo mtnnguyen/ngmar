@@ -75,11 +75,11 @@ class MessageDetailPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: const Icon(Icons.arrow_left),
+              icon: const Icon(Icons.arrow_left, size: 40),
               onPressed: currentIndex > 0 ? onPrevious : null,
             ),
             IconButton(
-              icon: const Icon(Icons.arrow_right),
+              icon: const Icon(Icons.arrow_right, size: 40),
               onPressed: currentIndex < alerts.length - 1 ? onNext : null,
             ),
           ],

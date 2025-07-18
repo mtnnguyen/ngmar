@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'account_page.dart';
 
 class MenuPage extends StatelessWidget {
   const MenuPage({super.key});
@@ -25,54 +26,83 @@ class MenuPage extends StatelessWidget {
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
+            child: Column(
               children: [
-                // 👤 Profile Header with image
-                Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 28,
-                      backgroundImage: NetworkImage(
-                        'https://i.pravatar.cc/150?img=3',
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      // Tappable Profile Header Row
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AccountPage()),
+                          );
+                        },
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const CircleAvatar(
+                              radius: 28,
+                              backgroundImage: NetworkImage(
+                                'https://i.pravatar.cc/150?img=3',
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Martin Nguyen',
+                                      style: TextStyle(fontSize: 18, color: Colors.white)),
+                                  const Text('martin.nguyen@email.com',
+                                      style: TextStyle(color: Colors.grey)),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: const [
+                                      Text(
+                                        style: TextStyle(
+                                          color: Colors.blue,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        'Action Required',
+                                      ),
+                                      SizedBox(width: 4),
+                                      Icon(Icons.info_outline,
+                                          size: 16, color: Colors.blue),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios,
+                                color: Colors.white70, size: 16),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('Martin Nguyen',
-                            style: TextStyle(fontSize: 18, color: Colors.white)),
-                        Text('martin.nguyen@email.com',
-                            style: TextStyle(color: Colors.grey)),
-                        SizedBox(height: 4),
-                        Text('Action Required',
-                            style: TextStyle(color: Colors.blue, fontSize: 12)),
-                      ],
-                    ),
-                  ],
+
+                      const SizedBox(height: 24),
+
+                      // 🛍 My Products Tile
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.electric_bolt, color: Colors.white),
+                        title: const Text('My Products',
+                            style: TextStyle(color: Colors.white)),
+                        trailing: const Icon(Icons.arrow_forward_ios,
+                            color: Colors.white70, size: 16),
+                        onTap: () {
+                          // Navigate to your MyProductsPage
+                        },
+                      ),
+                    ],
+                  ),
                 ),
 
-                const SizedBox(height: 24),
-
-                // 🛍 My Products Tile
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.electric_bolt, color: Colors.white),
-                  title: const Text('My Products',
-                      style: TextStyle(color: Colors.white)),
-                  trailing: const Icon(Icons.arrow_forward_ios,
-                      color: Colors.white70, size: 16),
-                  onTap: () {
-                    // Navigate to your MyProductsPage or similar
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
+                // 🔽 Bottom section: divider + options
                 const Divider(color: Colors.grey),
-
-                // Optional menu links (if needed)
                 ListTile(
                   leading: const Icon(Icons.verified_user, color: Colors.white),
                   title: const Text('Verify Email',
@@ -81,23 +111,15 @@ class MenuPage extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.settings, color: Colors.white),
-                  title:
-                      const Text('Settings', style: TextStyle(color: Colors.white)),
+                  title: const Text('Settings',
+                      style: TextStyle(color: Colors.white)),
                   onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.redAccent),
-                  title: const Text('Sign Out',
-                      style: TextStyle(color: Colors.redAccent)),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
                 ),
               ],
             ),
           ),
 
-          // 📱 App Version + Footer
+          // App Version + Footer
           Column(
             children: [
               const Text(

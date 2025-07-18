@@ -129,7 +129,7 @@ class _AlertsPageState extends State<AlertsPage> {
         centerTitle: true,
         title: const Text('Alerts'),
 
-        // ✅ Filter icon on the LEFT with dynamic popup position
+        // Filter icon on the LEFT with dynamic popup position
         leading: IconButton(
           key: _filterKey,
           icon: const Icon(Icons.filter_list),
