@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'account_page.dart';
 
+// Displays the main menu page with options for the user.
 class MenuPage extends StatelessWidget {
   const MenuPage({super.key});
 
@@ -93,7 +94,7 @@ class MenuPage extends StatelessWidget {
 
                       const SizedBox(height: 24),
 
-                      // 🛍 My Products Tile
+                      // My Products Line
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.electric_bolt, color: Colors.white),
@@ -156,6 +157,7 @@ class MenuPage extends StatelessWidget {
   }
 }
 
+// Helper widget to create a dot separator
 Widget _dotSeparator() {
   return const Padding(
     padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -163,12 +165,14 @@ Widget _dotSeparator() {
   );
 }
 
+// Custom widget for footer links
 class _FooterLink extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
 
   const _FooterLink({required this.text, required this.onTap});
-
+  
+  // Builds a tappable footer link
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

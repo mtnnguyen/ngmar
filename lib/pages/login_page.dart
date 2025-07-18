@@ -8,14 +8,17 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
+// State for the LoginPage widget
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  // Handles login logic
   void _handleLogin() {
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
+    // Simple validation for username and password
     if (username == 'Martin' && password == '123') {
       Navigator.pushReplacement(
         context,
@@ -31,6 +34,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Builds the login page UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(

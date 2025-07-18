@@ -59,16 +59,4 @@ final List<Map<String, dynamic>> allAlerts = [
     'preview': 'View the new 2022 Google performance data.',
     'read': false,
   },
-  {
-    'title': 'Nintendo Annual Report',
-    'date': DateTime(2022, 12, 26),
-    'preview': 'View the new 2022 Nintendo performance data.',
-    'read': false,
-  },
-  {
-    'title': 'Starbucks Annual Report',
-    'date': DateTime(2022, 12, 23),
-    'preview': 'View the new 2022 Starbucks performance data.',
-    'read': false,
-  },
 ];

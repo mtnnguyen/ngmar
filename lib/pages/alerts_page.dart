@@ -5,6 +5,7 @@ import 'alerts_data.dart';
 
 const darkBackground = Color(0xFF121212);
 
+// Displays a list of alerts and allows interaction.
 class AlertsPage extends StatefulWidget {
   const AlertsPage({super.key});
 
@@ -12,6 +13,7 @@ class AlertsPage extends StatefulWidget {
   State<AlertsPage> createState() => _AlertsPageState();
 }
 
+// State for the AlertsPage widget
 class _AlertsPageState extends State<AlertsPage> {
   final GlobalKey _filterKey = GlobalKey();
   late List<Map<String, dynamic>> filteredAlerts;
@@ -23,6 +25,7 @@ class _AlertsPageState extends State<AlertsPage> {
     filteredAlerts = List.from(allAlerts);
   }
 
+  // Sorts alerts based on the selected order
   void _sortAlerts(String order) {
     setState(() {
       filteredAlerts.sort((a, b) =>
@@ -30,6 +33,7 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  // Opens the detail view for a specific alert
   void _openDetail(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': true};
@@ -37,8 +41,10 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  // Goes back to the list view
   void _goBack() => setState(() => selectedIndex = null);
 
+  // Marks the current alert as unread and exits the detail view
   void _markAsUnread(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': false};
@@ -46,6 +52,7 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  // Goes to the next alert in detail view
   void _goToNextAlert() {
     if (selectedIndex != null && selectedIndex! < filteredAlerts.length - 1) {
       setState(() {
@@ -58,6 +65,7 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
+  // Goes to the previous alert in detail view
   void _goToPreviousAlert() {
     if (selectedIndex != null && selectedIndex! > 0) {
       setState(() {
@@ -75,6 +83,7 @@ class _AlertsPageState extends State<AlertsPage> {
     return selectedIndex != null ? _buildDetailView() : _buildAlertList();
   }
 
+  // Builds the detail view for the selected alert
   Widget _buildDetailView() {
     return Scaffold(
       backgroundColor: darkBackground,
@@ -93,6 +102,7 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
+  // Builds the list of alerts
   Widget _buildAlertList() {
     return Scaffold(
       backgroundColor: darkBackground,
@@ -110,6 +120,7 @@ class _AlertsPageState extends State<AlertsPage> {
             final Offset position =
                 button.localToGlobal(Offset.zero, ancestor: overlay);
 
+            // Calculate the position for the popup menu
             final RelativeRect positionRect = RelativeRect.fromLTRB(
               position.dx,
               position.dy + button.size.height,
@@ -117,6 +128,7 @@ class _AlertsPageState extends State<AlertsPage> {
               0,
             );
 
+            // Show the popup menu for sorting options
             final selected = await showMenu<String>(
               context: context,
               position: positionRect,
@@ -126,6 +138,7 @@ class _AlertsPageState extends State<AlertsPage> {
               ],
             );
 
+            // If a sort option is selected, sort alerts
             if (selected != null) _sortAlerts(selected);
           },
           tooltip: 'Sort Alerts',
@@ -161,6 +174,7 @@ class _AlertsPageState extends State<AlertsPage> {
   }
 }
 
+// Custom widgets for displaying each alert in the list
 class _AlertTile extends StatelessWidget {
   final Map<String, dynamic> alert;
   final VoidCallback onTap;
