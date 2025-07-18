@@ -1,76 +1,114 @@
 import 'package:flutter/material.dart';
+import '../main.dart'; // Import HomePage from main.dart instead of AlertsPage
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  void _handleLogin() {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+
+    if (username == 'Martin' && password == '123') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()), // ✅ Fixed target
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid username or password'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: const Color.fromARGB(255, 53, 52, 52),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 🖼 Surveil.One logo
+              // Logo
               Image.network(
                 'https://images.squarespace-cdn.com/content/v1/67fa8c0fe003dd6c78c62313/da9f915c-8ad6-4e53-93b4-8ac733863bcf/Artboard+1survei%402x.png?format=1500w',
-                height: 100,
+                height: 120,
               ),
 
               const SizedBox(height: 32),
 
-              // Username Field
               const Align(
                 alignment: Alignment.centerLeft,
-                child: Text('User Name:', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'User Name:',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 4),
               TextField(
+                controller: _usernameController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.grey.shade800,
+                  fillColor: Colors.grey[800],
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // Password Field
               const Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Password:', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'Password:',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 4),
               TextField(
+                controller: _passwordController,
                 obscureText: true,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.grey.shade800,
+                  fillColor: Colors.grey[800],
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
 
               const SizedBox(height: 32),
 
-              // Log In Button
+              // Login Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: const Color(0xFF4CAF50),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
-                  onPressed: () {
-                    // TODO: Handle login logic
-                  },
-                  child: const Text('Log In'),
+                  onPressed: _handleLogin,
+                  child: const Text('Log In', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
 
@@ -81,12 +119,14 @@ class LoginPage extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: const Color(0xFF4CAF50),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
                   onPressed: () {
-                    // TODO: Handle sign up logic
+                    // Handle sign up if needed
                   },
-                  child: const Text('Sign Up'),
+                  child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],

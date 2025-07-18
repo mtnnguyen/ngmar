@@ -21,13 +21,29 @@ class AccountPage extends StatelessWidget {
         children: [
           const SizedBox(height: 24),
 
-          // 👤 Centered profile picture
-          const CircleAvatar(
-            radius: 40,
-            backgroundColor: Colors.grey,
-            child: Icon(Icons.person, size: 40, color: Colors.black),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              const CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.grey,
+                child: Icon(Icons.person, size: 40, color: Colors.black),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.blue,
+                    border: Border.all(color: Colors.black, width: 2),
+                  ),
+                  child: Icon(Icons.add, size: 18, color: Colors.white),
+                  padding: const EdgeInsets.all(4),
+                ),
+              ),
+            ],
           ),
-
           const SizedBox(height: 24),
 
           // Verify Email card

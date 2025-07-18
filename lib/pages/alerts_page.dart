@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'detail_pages/message_detail_page.dart';
 import 'menu_page.dart';
+import 'alerts_data.dart';
 
 const darkBackground = Color(0xFF121212);
 
-// The main page to display alerts
 class AlertsPage extends StatefulWidget {
   const AlertsPage({super.key});
 
@@ -12,34 +12,9 @@ class AlertsPage extends StatefulWidget {
   State<AlertsPage> createState() => _AlertsPageState();
 }
 
-// Creating alerts and displaying them
 class _AlertsPageState extends State<AlertsPage> {
-  final List<Map<String, dynamic>> allAlerts = [
-    {
-      'title': 'Welcome to New Inbox',
-      'date': DateTime(2022, 12, 7),
-      'preview': 'Check your inbox for important info...',
-      'read': false,
-    },
-    {
-      'title': 'System Update Notice',
-      'date': DateTime(2022, 12, 8),
-      'preview': 'A new system update is available.',
-      'read': false,
-    },
-    {
-      'title': 'Tesla Annual Report',
-      'date': DateTime(2022, 12, 5),
-      'preview': 'View the new 2022 Tesla performance data.',
-      'read': false,
-    },
-  ];
-
-  // Used to position the filter popup correctly
   final GlobalKey _filterKey = GlobalKey();
-
-  // List of alerts filtered by sorted order
-  List<Map<String, dynamic>> filteredAlerts = [];
+  late List<Map<String, dynamic>> filteredAlerts;
   int? selectedIndex;
 
   @override
@@ -48,18 +23,13 @@ class _AlertsPageState extends State<AlertsPage> {
     filteredAlerts = List.from(allAlerts);
   }
 
-  // Sorts the alerts based on newest or oldest
   void _sortAlerts(String order) {
     setState(() {
-      if (order == 'newest') {
-        filteredAlerts.sort((a, b) => b['date'].compareTo(a['date']));
-      } else if (order == 'oldest') {
-        filteredAlerts.sort((a, b) => a['date'].compareTo(b['date']));
-      }
+      filteredAlerts.sort((a, b) =>
+          order == 'newest' ? b['date'].compareTo(a['date']) : a['date'].compareTo(b['date']));
     });
   }
 
-  // Opens a specific alert
   void _openDetail(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': true};
@@ -67,14 +37,8 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
-  // Goes back to the main alerts list
-  void _goBack() {
-    setState(() {
-      selectedIndex = null;
-    });
-  }
+  void _goBack() => setState(() => selectedIndex = null);
 
-  // Marks an alert as unread
   void _markAsUnread(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': false};
@@ -82,54 +46,59 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
-  // Navigates to the next alert (right arrow)
   void _goToNextAlert() {
     if (selectedIndex != null && selectedIndex! < filteredAlerts.length - 1) {
       setState(() {
         selectedIndex = selectedIndex! + 1;
         filteredAlerts[selectedIndex!] = {
           ...filteredAlerts[selectedIndex!],
-          'read': true
+          'read': true,
         };
       });
     }
   }
 
-  // Navigates to the previous alert (left arrow)
   void _goToPreviousAlert() {
     if (selectedIndex != null && selectedIndex! > 0) {
       setState(() {
         selectedIndex = selectedIndex! - 1;
         filteredAlerts[selectedIndex!] = {
           ...filteredAlerts[selectedIndex!],
-          'read': true
+          'read': true,
         };
       });
     }
   }
 
-  // Alert detail page contains a bottom navigation bar
   @override
   Widget build(BuildContext context) {
-    if (selectedIndex != null) {
-      return MessageDetailPage(
+    return selectedIndex != null ? _buildDetailView() : _buildAlertList();
+  }
+
+  Widget _buildDetailView() {
+    return Scaffold(
+      backgroundColor: darkBackground,
+      appBar: AppBar(
+        backgroundColor: darkBackground,
+        title: const Text('Message Detail'),
+      ),
+      body: MessageDetailPage(
         alerts: filteredAlerts,
         currentIndex: selectedIndex!,
         onBack: _goBack,
         onMarkAsUnread: () => _markAsUnread(selectedIndex!),
         onNext: _goToNextAlert,
         onPrevious: _goToPreviousAlert,
-      );
-    }
+      ),
+    );
+  }
 
-    // Displaying the list of alerts
+  Widget _buildAlertList() {
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
         centerTitle: true,
         title: const Text('Alerts'),
-
-        // Filter icon on the LEFT with dynamic popup position
         leading: IconButton(
           key: _filterKey,
           icon: const Icon(Icons.filter_list),
@@ -161,8 +130,6 @@ class _AlertsPageState extends State<AlertsPage> {
           },
           tooltip: 'Sort Alerts',
         ),
-
-        // Menu icon on the RIGHT
         actions: [
           IconButton(
             icon: const Icon(Icons.menu),
@@ -177,41 +144,54 @@ class _AlertsPageState extends State<AlertsPage> {
         ],
       ),
       body: filteredAlerts.isEmpty
-          ? const Center(child: Text('No alerts found.'))
-          : ListView.builder(
-              itemCount: filteredAlerts.length,
-              itemBuilder: (context, index) {
-                final alert = filteredAlerts[index];
-                return ListTile(
-                  leading: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      const Icon(Icons.notification_important,
-                          color: Colors.amber, size: 32),
-                      if (!alert['read'])
-                        Positioned(
-                          top: 4,
-                          right: 0,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  title: Text(alert['title']),
-                  subtitle: Text(alert['preview']),
-                  trailing: Text(
-                    '${alert['date'].month}/${alert['date'].day}/${alert['date'].year}',
-                  ),
+          ? const Center(
+              child: Text('No alerts found.', style: TextStyle(color: Colors.white)),
+            )
+          : SafeArea(
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 80),
+                itemCount: filteredAlerts.length,
+                itemBuilder: (context, index) => _AlertTile(
+                  alert: filteredAlerts[index],
                   onTap: () => _openDetail(index),
-                );
-              },
+                ),
+              ),
             ),
+    );
+  }
+}
+
+class _AlertTile extends StatelessWidget {
+  final Map<String, dynamic> alert;
+  final VoidCallback onTap;
+
+  const _AlertTile({required this.alert, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Stack(
+        alignment: Alignment.center,
+        children: [
+          const Icon(Icons.notification_important, color: Colors.amber, size: 32),
+          if (!alert['read'])
+            const Positioned(
+              top: 4,
+              right: 0,
+              child: CircleAvatar(
+                backgroundColor: Colors.red,
+                radius: 5,
+              ),
+            ),
+        ],
+      ),
+      title: Text(alert['title'], style: const TextStyle(color: Colors.white)),
+      subtitle: Text(alert['preview'], style: const TextStyle(color: Colors.white70)),
+      trailing: Text(
+        '${alert['date'].month}/${alert['date'].day}/${alert['date'].year}',
+        style: const TextStyle(color: Colors.grey),
+      ),
+      onTap: onTap,
     );
   }
 }

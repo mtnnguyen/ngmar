@@ -32,54 +32,62 @@ class MenuPage extends StatelessWidget {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      // Tappable Profile Header Row
-                      GestureDetector(
+                      // Tappable Profile Header Row with background on tap
+                      InkWell(
+                        borderRadius: BorderRadius.circular(12),
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => const AccountPage()),
                           );
                         },
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const CircleAvatar(
-                              radius: 28,
-                              backgroundImage: NetworkImage(
-                                'https://i.pravatar.cc/150?img=3',
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade900,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const CircleAvatar(
+                                radius: 28,
+                                backgroundImage: NetworkImage(
+                                  'https://media.licdn.com/dms/image/v2/D5603AQGPzsD0Cat56w/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1730082888067?e=1755734400&v=beta&t=5D6v0NsddCXrTvRL7T_p9iUGQbi8RHoMNvEP9_S0pZk',
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Martin Nguyen',
-                                      style: TextStyle(fontSize: 18, color: Colors.white)),
-                                  const Text('martin.nguyen@email.com',
-                                      style: TextStyle(color: Colors.grey)),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: const [
-                                      Text(
-                                        style: TextStyle(
-                                          color: Colors.blue,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Martin Nguyen',
+                                        style: TextStyle(fontSize: 18, color: Colors.white)),
+                                    const Text('martin.nguyen@email.com',
+                                        style: TextStyle(color: Colors.grey)),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: const [
+                                        Text(
+                                          'Action Required',
+                                          style: TextStyle(
+                                            color: Colors.blue,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
-                                        'Action Required',
-                                      ),
-                                      SizedBox(width: 4),
-                                      Icon(Icons.info_outline,
-                                          size: 16, color: Colors.blue),
-                                    ],
-                                  ),
-                                ],
+                                        SizedBox(width: 4),
+                                        Icon(Icons.info_outline,
+                                            size: 16, color: Colors.blue),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const Icon(Icons.arrow_forward_ios,
-                                color: Colors.white70, size: 16),
-                          ],
+                              const Icon(Icons.arrow_forward_ios,
+                                  color: Colors.white70, size: 16),
+                            ],
+                          ),
                         ),
                       ),
 
@@ -101,7 +109,7 @@ class MenuPage extends StatelessWidget {
                   ),
                 ),
 
-                // 🔽 Bottom section: divider + options
+                // Bottom section: divider + options
                 const Divider(color: Colors.grey),
                 ListTile(
                   leading: const Icon(Icons.verified_user, color: Colors.white),
