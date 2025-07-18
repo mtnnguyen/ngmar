@@ -97,7 +97,7 @@ class MenuPage extends StatelessWidget {
                       // My Products Line
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.electric_bolt, color: Colors.white),
+                        leading: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
                         title: const Text('My Products',
                             style: TextStyle(color: Colors.white)),
                         trailing: const Icon(Icons.arrow_forward_ios,
