@@ -8,8 +8,19 @@ class MenuPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Menu'),
         backgroundColor: Colors.black,
+        centerTitle: true,
+        title: const Text('Menu'),
+        actions: [
+          Tooltip(
+            message: 'This is your account menu.',
+            child: IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: () {},
+              splashRadius: 20,
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
