@@ -113,12 +113,6 @@ class MenuPage extends StatelessWidget {
                 // Bottom section: divider + options
                 const Divider(color: Colors.grey),
                 ListTile(
-                  leading: const Icon(Icons.verified_user, color: Colors.white),
-                  title: const Text('Verify Email',
-                      style: TextStyle(color: Colors.white)),
-                  onTap: () {},
-                ),
-                ListTile(
                   leading: const Icon(Icons.settings, color: Colors.white),
                   title: const Text('Settings',
                       style: TextStyle(color: Colors.white)),

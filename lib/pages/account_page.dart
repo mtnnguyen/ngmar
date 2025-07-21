@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart'; // Make sure this file exists
+import 'login_page.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -38,8 +38,8 @@ class AccountPage extends StatelessWidget {
                     color: Colors.blue,
                     border: Border.all(color: Colors.black, width: 2),
                   ),
-                  child: Icon(Icons.add, size: 18, color: Colors.white),
                   padding: const EdgeInsets.all(4),
+                  child: Icon(Icons.add, size: 18, color: Colors.white),
                 ),
               ),
             ],
@@ -61,7 +61,7 @@ class AccountPage extends StatelessWidget {
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text(
-                  'Verify your sign in email to secure your Tesla Account',
+                  'Verify your sign in email to secure your Account',
                   style: TextStyle(color: Colors.white70),
                 ),
                 trailing: const Icon(Icons.arrow_forward_ios,
