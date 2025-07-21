@@ -91,16 +91,6 @@ class AccountPage extends StatelessWidget {
                   onTap: () {},
                 ),
                 _AccountOption(
-                  icon: Icons.account_balance_wallet_outlined,
-                  label: 'Wallet',
-                  onTap: () {},
-                ),
-                _AccountOption(
-                  icon: Icons.shopping_bag_outlined,
-                  label: 'Order History',
-                  onTap: () {},
-                ),
-                _AccountOption(
                   icon: Icons.lock_outline,
                   label: 'Security & Privacy',
                   onTap: () {},

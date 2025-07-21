@@ -112,12 +112,6 @@ class MenuPage extends StatelessWidget {
 
                 // Bottom section: divider + options
                 const Divider(color: Colors.grey),
-                ListTile(
-                  leading: const Icon(Icons.settings, color: Colors.white),
-                  title: const Text('Settings',
-                      style: TextStyle(color: Colors.white)),
-                  onTap: () {},
-                ),
               ],
             ),
           ),
