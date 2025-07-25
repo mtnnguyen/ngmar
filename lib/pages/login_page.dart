@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import 'signup_page.dart';
 
-// LoginPage widget for user authentication
-// Allows user to enter their username and password
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -19,7 +17,6 @@ class _LoginPageState extends State<LoginPage> {
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
-    // Validate user credentials
     if (username == 'Martin' && password == '123') {
       Navigator.pushReplacement(
         context,
@@ -35,83 +32,93 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Build the login page UI (user, password fields, buttons)
   @override
   Widget build(BuildContext context) {
+    const backgroundColor = Color.fromARGB(255, 53, 52, 52);
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 53, 52, 52),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
+      backgroundColor: backgroundColor,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          children: [
+            const SizedBox(height: 48),
+
+            // Logo at the top
+            Container(
+              color: backgroundColor,
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Center(
                 child: Image.network(
                   'https://images.squarespace-cdn.com/content/v1/67fa8c0fe003dd6c78c62313/da9f915c-8ad6-4e53-93b4-8ac733863bcf/Artboard+1survei%402x.png?format=1500w',
-                  height: 120,
+                  height: 60,
+                  fit: BoxFit.contain,
                 ),
               ),
-              const SizedBox(height: 16),
-              const Center(
-                child: Text(
-                  'Sign In',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            ),
+
+            const SizedBox(height: 32),
+
+            const Text(
+              'Sign In',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
               ),
-              const SizedBox(height: 32),
+            ),
 
-              _buildLabel('User Name:'),
-              const SizedBox(height: 4),
-              _buildTextField(_usernameController),
+            const SizedBox(height: 40),
 
-              const SizedBox(height: 16),
+            _buildLabel('User Name:'),
+            const SizedBox(height: 6),
+            _buildTextField(_usernameController),
 
-              _buildLabel('Password:'),
-              const SizedBox(height: 4),
-              _buildTextField(_passwordController, obscure: true),
+            const SizedBox(height: 16),
 
-              const SizedBox(height: 24),
+            _buildLabel('Password:'),
+            const SizedBox(height: 6),
+            _buildTextField(_passwordController, obscure: true),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _buildSmallButton('Sign In', _handleLogin),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _buildSmallButton('Sign Up', () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SignUpPage()),
-                    );
-                  }),
-                ],
-              ),
-            ],
-          ),
+            const SizedBox(height: 24),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _buildSmallButton('Sign In', _handleLogin),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _buildSmallButton('Sign Up', () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SignUpPage()),
+                  );
+                }),
+              ],
+            ),
+
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );
   }
 
-  // Helper method
   Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
     );
   }
 
-  // Helper method
   Widget _buildTextField(TextEditingController controller, {bool obscure = false}) {
     return TextField(
       controller: controller,
@@ -129,7 +136,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Helper method
   Widget _buildSmallButton(String text, VoidCallback onPressed) {
     return SizedBox(
       width: 100,

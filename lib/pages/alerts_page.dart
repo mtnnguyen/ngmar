@@ -12,6 +12,8 @@ class AlertsPage extends StatefulWidget {
   State<AlertsPage> createState() => _AlertsPageState();
 }
 
+
+// Displays a list of alerts with options to sort and view details.
 class _AlertsPageState extends State<AlertsPage> {
   final GlobalKey _filterKey = GlobalKey();
   late List<Map<String, dynamic>> filteredAlerts;
@@ -23,6 +25,7 @@ class _AlertsPageState extends State<AlertsPage> {
     filteredAlerts = List.from(allAlerts);
   }
 
+  // Sorts alerts based on the selected order
   void _sortAlerts(String order) {
     setState(() {
       filteredAlerts.sort((a, b) =>
@@ -30,15 +33,17 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  // Opens the detail view for a selected alert
   void _openDetail(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': true};
       selectedIndex = index;
     });
   }
-
+  // Goes back to the list view
   void _goBack() => setState(() => selectedIndex = null);
 
+  // Marks an alert as unread
   void _markAsUnread(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': false};
@@ -46,6 +51,7 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  // Navigates to the next or previous alert
   void _goToNextAlert() {
     if (selectedIndex != null && selectedIndex! < filteredAlerts.length - 1) {
       setState(() {
@@ -70,6 +76,7 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
+  // Builds the main UI for the Alerts page
   @override
   Widget build(BuildContext context) {
     return selectedIndex != null ? _buildDetailView() : _buildAlertList();
@@ -93,6 +100,7 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
+  // Builds the list of alerts with sorting and filtering options
   Widget _buildAlertList() {
     return Scaffold(
       backgroundColor: darkBackground,
@@ -161,6 +169,8 @@ class _AlertsPageState extends State<AlertsPage> {
   }
 }
 
+
+// Single alert tile in the list
 class _AlertTile extends StatelessWidget {
   final Map<String, dynamic> alert;
   final VoidCallback onTap;
