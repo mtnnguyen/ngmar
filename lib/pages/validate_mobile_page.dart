@@ -9,6 +9,7 @@ class ValidateMobilePage extends StatefulWidget {
   State<ValidateMobilePage> createState() => _ValidateMobilePageState();
 }
 
+// Validating their mobile number through a verification code
 class _ValidateMobilePageState extends State<ValidateMobilePage> {
   final TextEditingController _codeController = TextEditingController();
 
@@ -97,7 +98,7 @@ class _ValidateMobilePageState extends State<ValidateMobilePage> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Submit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: const Text('Validate', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 16),

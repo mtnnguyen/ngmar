@@ -42,5 +42,13 @@ workflows:
             --form "platform=ios" \
             --form "note=NgMar Flutter App"
 
+        - name: Upload API onto Android
+        script: |
+          curl --location --request POST "https://api.appetize.io/v1/apps" \
+            --header "Authorization: ..." \
+            --form "file=@build/ios_sim_output/Build/Products/Debug-iphonesimulator/app.zip" \
+            --form "platform=ios" \ ...
+            --form "note=NgMar Flutter App"
+
     artifacts:
       - build/ios_sim_output/Build/Products/Debug-iphonesimulator/app.zip

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'validate_mobile_page.dart';
 
+// SignUpPage is a screen for user registration.
+// It includes fields for username, password, first name, last name, email, and mobile number.
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -8,6 +10,7 @@ class SignUpPage extends StatefulWidget {
   State<SignUpPage> createState() => _SignUpPageState();
 }
 
+// _SignUpPageState manages the state of SignUpPage.
 class _SignUpPageState extends State<SignUpPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -112,6 +115,7 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  // Uses a dropdown field
   Widget _buildDropdownField(String label, String selected) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,6 +148,7 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  // Helper method
   Widget _buildInputField(String label, TextEditingController controller,
       {bool obscure = false}) {
     return Column(
@@ -161,6 +166,7 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  // Helper method
   Widget _buildLabel(String label) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
@@ -169,6 +175,7 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       );
 
+  // Helper method
   InputDecoration _inputDecoration() {
     return const InputDecoration(
       filled: true,

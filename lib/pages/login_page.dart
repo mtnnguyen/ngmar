@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import 'signup_page.dart';
 
+// LoginPage widget for user authentication
+// Allows user to enter their username and password
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -17,6 +19,7 @@ class _LoginPageState extends State<LoginPage> {
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
+    // Validate user credentials
     if (username == 'Martin' && password == '123') {
       Navigator.pushReplacement(
         context,
@@ -32,6 +35,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Build the login page UI (user, password fields, buttons)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,11 +45,24 @@ class _LoginPageState extends State<LoginPage> {
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Logo
-              Image.network(
-                'https://images.squarespace-cdn.com/content/v1/67fa8c0fe003dd6c78c62313/da9f915c-8ad6-4e53-93b4-8ac733863bcf/Artboard+1survei%402x.png?format=1500w',
-                height: 120,
+              Center(
+                child: Image.network(
+                  'https://images.squarespace-cdn.com/content/v1/67fa8c0fe003dd6c78c62313/da9f915c-8ad6-4e53-93b4-8ac733863bcf/Artboard+1survei%402x.png?format=1500w',
+                  height: 120,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Center(
+                child: Text(
+                  'Sign In',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               const SizedBox(height: 32),
 
@@ -59,20 +76,26 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 4),
               _buildTextField(_passwordController, obscure: true),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-              // Log In button
-              _buildButton('Log In', _handleLogin),
-
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _buildSmallButton('Sign In', _handleLogin),
+                ],
+              ),
               const SizedBox(height: 8),
-
-              // Sign Up button
-              _buildButton('Sign Up', () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SignUpPage()),
-                );
-              }),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _buildSmallButton('Sign Up', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SignUpPage()),
+                    );
+                  }),
+                ],
+              ),
             ],
           ),
         ),
@@ -80,16 +103,15 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // Helper method
   Widget _buildLabel(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
+    return Text(
+      text,
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     );
   }
 
+  // Helper method
   Widget _buildTextField(TextEditingController controller, {bool obscure = false}) {
     return TextField(
       controller: controller,
@@ -107,13 +129,14 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildButton(String text, VoidCallback onPressed) {
+  // Helper method
+  Widget _buildSmallButton(String text, VoidCallback onPressed) {
     return SizedBox(
-      width: double.infinity,
+      width: 100,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4CAF50),
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
         onPressed: onPressed,

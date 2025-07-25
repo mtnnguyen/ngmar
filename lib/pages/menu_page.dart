@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'account_page.dart';
+import 'my_products_page.dart';
 
 // Displays the main menu page with options for the user.
 class MenuPage extends StatelessWidget {
@@ -103,7 +104,10 @@ class MenuPage extends StatelessWidget {
                         trailing: const Icon(Icons.arrow_forward_ios,
                             color: Colors.white70, size: 16),
                         onTap: () {
-                          // Navigate to your MyProductsPage
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const MyProductsPage()),
+                          );
                         },
                       ),
                     ],
@@ -160,7 +164,6 @@ class _FooterLink extends StatelessWidget {
 
   const _FooterLink({required this.text, required this.onTap});
   
-  // Builds a tappable footer link
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
