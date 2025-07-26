@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'validate_mobile_page.dart';
+import 'graphql_service.dart';
 
 // SignUpPage is a screen for user registration.
 // It includes fields for username, password, first name, last name, email, and mobile number.
@@ -71,9 +72,37 @@ class _SignUpPageState extends State<SignUpPage> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     final mobile = _mobileController.text.trim();
-                    if (mobile.isNotEmpty) {
+
+                    if (mobile.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a valid mobile number'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    final party = {
+                      'first_name': _firstNameController.text.trim(),
+                      'middle_name': '', // Required by API, safe to leave empty
+                      'last_name': _lastNameController.text.trim(),
+                      'user_name': _usernameController.text.trim(),
+                      'password': _passwordController.text.trim(),
+                      'email': _emailController.text.trim(),
+                      'mobile': mobile,
+                      'phone': ''
+                    };
+
+                    final graphqlService = GraphQLService();
+                    final result = await graphqlService.signup(party, 'test_site');
+
+                    if (result != null && result['error_code'] == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Signup successful!')),
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -82,13 +111,14 @@ class _SignUpPageState extends State<SignUpPage> {
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a valid mobile number'),
+                        SnackBar(
+                          content: Text('Signup failed: ${result?['message'] ?? 'Unknown error'}'),
                           backgroundColor: Colors.red,
                         ),
                       );
                     }
                   },
+
                   child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),

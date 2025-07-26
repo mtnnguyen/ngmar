@@ -39,7 +39,7 @@ class AccountPage extends StatelessWidget {
                     border: Border.all(color: Colors.black, width: 2),
                   ),
                   padding: const EdgeInsets.all(4),
-                  child: Icon(Icons.add, size: 18, color: Colors.white),
+                  child: const Icon(Icons.add, size: 18, color: Colors.white),
                 ),
               ),
             ],

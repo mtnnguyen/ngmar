@@ -39,7 +39,7 @@ class PharmacyScenePainter extends CustomPainter {
     );
 
     // Pharmacy sign
-    final signHeight = 32.0;
+    const signHeight = 32.0;
     final signRect = Rect.fromLTWH(
       buildingLeft + buildingWidth * 0.2,
       buildingTop - signHeight - 8,
@@ -87,7 +87,7 @@ class PharmacyScenePainter extends CustomPainter {
 
     // Surveillance Camera
     final cameraMount = Offset(buildingLeft - 28, windowTop + 10);
-    final double armLength = 24;
+    const double armLength = 24;
     final double rotation = sin(animationValue * 2 * pi) * pi / 10;
 
     // Draw camera arm

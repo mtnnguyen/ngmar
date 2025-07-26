@@ -49,27 +49,27 @@ class MenuPage extends StatelessWidget {
                             color: Colors.grey.shade900,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
+                          child: const Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const CircleAvatar(
+                              CircleAvatar(
                                 radius: 28,
                                 backgroundImage: NetworkImage(
                                   'https://media.licdn.com/dms/image/v2/D5603AQGPzsD0Cat56w/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1730082888067?e=1755734400&v=beta&t=5D6v0NsddCXrTvRL7T_p9iUGQbi8RHoMNvEP9_S0pZk',
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('Martin Nguyen',
+                                    Text('Martin Nguyen',
                                         style: TextStyle(fontSize: 18, color: Colors.white)),
-                                    const Text('martin.nguyen@email.com',
+                                    Text('martin.nguyen@email.com',
                                         style: TextStyle(color: Colors.grey)),
-                                    const SizedBox(height: 4),
+                                    SizedBox(height: 4),
                                     Row(
-                                      children: const [
+                                      children: [
                                         Text(
                                           'Action Required',
                                           style: TextStyle(
@@ -86,7 +86,7 @@ class MenuPage extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.arrow_forward_ios,
+                              Icon(Icons.arrow_forward_ios,
                                   color: Colors.white70, size: 16),
                             ],
                           ),

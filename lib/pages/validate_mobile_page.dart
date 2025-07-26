@@ -61,9 +61,9 @@ class _ValidateMobilePageState extends State<ValidateMobilePage> {
             children: [
               const Icon(Icons.lock_outline, color: Colors.white, size: 80),
               const SizedBox(height: 20),
-              Text(
+              const Text(
                 'A code has been sent to:',
-                style: const TextStyle(color: Colors.white70, fontSize: 16),
+                style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(

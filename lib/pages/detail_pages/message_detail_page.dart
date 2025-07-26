@@ -26,7 +26,7 @@ class MessageDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final alert = alerts[currentIndex];
-    
+
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
@@ -52,15 +52,37 @@ class MessageDetailPage extends StatelessWidget {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Text(alert['preview']),
-            const SizedBox(height: 24),
-            Container(
-              color: darkBackground,
-              height: 150,
-              width: double.infinity,
-              child: const Center(child: Text('Display Image')),
+            Text(
+              alert['preview'],
+              style: const TextStyle(color: Colors.white70),
             ),
             const SizedBox(height: 24),
+
+            // ✅ Display alert image if available
+            if (alert['image_url'] != null && alert['image_url'].toString().isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  alert['image_url'],
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 200,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Text('Failed to load image', style: TextStyle(color: Colors.redAccent)),
+                  ),
+                ),
+              )
+            else
+              const Text('No image available', style: TextStyle(color: Colors.white54)),
+
+            const SizedBox(height: 24),
+
             ElevatedButton.icon(
               onPressed: onMarkAsUnread,
               icon: const Icon(Icons.markunread),

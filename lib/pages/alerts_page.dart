@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'graphql_service.dart';
 import 'detail_pages/message_detail_page.dart';
 import 'menu_page.dart';
-import 'alerts_data.dart';
 
 const darkBackground = Color(0xFF121212);
 
@@ -12,20 +12,42 @@ class AlertsPage extends StatefulWidget {
   State<AlertsPage> createState() => _AlertsPageState();
 }
 
-
-// Displays a list of alerts with options to sort and view details.
 class _AlertsPageState extends State<AlertsPage> {
   final GlobalKey _filterKey = GlobalKey();
-  late List<Map<String, dynamic>> filteredAlerts;
+  List<Map<String, dynamic>> filteredAlerts = [];
   int? selectedIndex;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    filteredAlerts = List.from(allAlerts);
+    _fetchAlerts();
   }
 
-  // Sorts alerts based on the selected order
+  Future<void> _fetchAlerts() async {
+    final service = GraphQLService();
+    final alerts = await service.getAlerts(
+      siteName: 'test_site',
+      fromDate: '2025-07-01T00:00:00Z',
+      toDate: '2025-07-26T23:59:59Z',
+    );
+
+    if (alerts != null) {
+      setState(() {
+        filteredAlerts = alerts.map((alert) {
+          return {
+            ...alert,
+            'title': alert['alert_type'] ?? 'Alert',
+            'preview': alert['alert_status'] ?? 'Status',
+            'read': false,
+            'date': DateTime.tryParse(alert['create_timestamp'] ?? '') ?? DateTime.now(),
+          };
+        }).toList();
+      });
+    }
+    setState(() => isLoading = false);
+  }
+
   void _sortAlerts(String order) {
     setState(() {
       filteredAlerts.sort((a, b) =>
@@ -33,17 +55,15 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
-  // Opens the detail view for a selected alert
   void _openDetail(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': true};
       selectedIndex = index;
     });
   }
-  // Goes back to the list view
+
   void _goBack() => setState(() => selectedIndex = null);
 
-  // Marks an alert as unread
   void _markAsUnread(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': false};
@@ -51,7 +71,6 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
-  // Navigates to the next or previous alert
   void _goToNextAlert() {
     if (selectedIndex != null && selectedIndex! < filteredAlerts.length - 1) {
       setState(() {
@@ -76,7 +95,6 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
-  // Builds the main UI for the Alerts page
   @override
   Widget build(BuildContext context) {
     return selectedIndex != null ? _buildDetailView() : _buildAlertList();
@@ -100,7 +118,6 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  // Builds the list of alerts with sorting and filtering options
   Widget _buildAlertList() {
     return Scaffold(
       backgroundColor: darkBackground,
@@ -151,26 +168,24 @@ class _AlertsPageState extends State<AlertsPage> {
           ),
         ],
       ),
-      body: filteredAlerts.isEmpty
-          ? const Center(
-              child: Text('No alerts found.', style: TextStyle(color: Colors.white)),
-            )
-          : SafeArea(
-              child: ListView.builder(
-                padding: const EdgeInsets.only(bottom: 80),
-                itemCount: filteredAlerts.length,
-                itemBuilder: (context, index) => _AlertTile(
-                  alert: filteredAlerts[index],
-                  onTap: () => _openDetail(index),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : filteredAlerts.isEmpty
+              ? const Center(child: Text('No alerts found.', style: TextStyle(color: Colors.white)))
+              : SafeArea(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    itemCount: filteredAlerts.length,
+                    itemBuilder: (context, index) => _AlertTile(
+                      alert: filteredAlerts[index],
+                      onTap: () => _openDetail(index),
+                    ),
+                  ),
                 ),
-              ),
-            ),
     );
   }
 }
 
-
-// Single alert tile in the list
 class _AlertTile extends StatelessWidget {
   final Map<String, dynamic> alert;
   final VoidCallback onTap;
@@ -180,20 +195,18 @@ class _AlertTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Icon(Icons.add_alert_outlined, size: 25, color: Colors.grey),
-          if (!alert['read'])
-            const Positioned(
-              top: 4,
-              right: 0,
-              child: CircleAvatar(
-                backgroundColor: Colors.red,
-                radius: 5,
-              ),
-            ),
-        ],
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: alert['image_url'] != null
+            ? Image.network(
+                alert['image_url'],
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.broken_image, color: Colors.grey),
+              )
+            : const Icon(Icons.image_not_supported, size: 30, color: Colors.grey),
       ),
       title: Text(alert['title'], style: const TextStyle(color: Colors.white)),
       subtitle: Text(alert['preview'], style: const TextStyle(color: Colors.white70)),

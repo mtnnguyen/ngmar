@@ -64,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
         backgroundColor: const Color(0xFF1E1E1E),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
-        leading: const BackButton(),
+        automaticallyImplyLeading: false, // ✅ ensures no back button is shown
       ),
       body: Center(
         child: SingleChildScrollView(
