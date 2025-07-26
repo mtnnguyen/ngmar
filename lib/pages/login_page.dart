@@ -1,152 +1,176 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
-import 'signup_page.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
+import 'graphql_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  void _handleLogin() {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
+  bool _isLoading = false;
+  String? _errorMessage;
 
-    if (username == 'Martin' && password == '123') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+  Future<void> _signIn() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final client = GraphQLProvider.of(context).value;
+      final service = GraphQLService();
+
+      final data = await service.signin(
+        _usernameController.text.trim(),
+        _passwordController.text.trim(),
+        'test_site', // This should match your cURL example
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid username or password'),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+      if (data == null) {
+        setState(() {
+          _errorMessage = 'Something went wrong. Please try again.';
+        });
+      } else if (data['error_code'] == null && data['party'] != null) {
+        final user = data['party'];
+        debugPrint('Signed in as: ${user['user_name']} (${user['email']})');
+        Navigator.pushReplacementNamed(context, '/menu');
+      } else {
+        setState(() {
+          _errorMessage = "Login failed. Error code: ${data['error_code']}";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Something went wrong. Please try again.';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color.fromARGB(255, 53, 52, 52);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          children: [
-            const SizedBox(height: 48),
+      backgroundColor: const Color(0xFF1E1E1E),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E1E1E),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        leading: const BackButton(),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+              child: Column(
+                children: [
+                  Image.network(
+                    'https://images.squarespace-cdn.com/content/v1/67fa8c0fe003dd6c78c62313/da9f915c-8ad6-4e53-93b4-8ac733863bcf/Artboard+1survei%402x.png?format=1500w',
+                    height: 100,
+                  ),
+      const SizedBox(height: 20),
+      const Text(
+        'Sign In',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ],
+  ),
+),
 
-            // Logo at the top
-            Container(
-              color: backgroundColor,
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Center(
-                child: Image.network(
-                  'https://images.squarespace-cdn.com/content/v1/67fa8c0fe003dd6c78c62313/da9f915c-8ad6-4e53-93b4-8ac733863bcf/Artboard+1survei%402x.png?format=1500w',
-                  height: 60,
-                  fit: BoxFit.contain,
+              const SizedBox(height: 30),
+              _buildInputField('User name', _usernameController),
+              _buildInputField('Password', _passwordController, obscure: true),
+              const SizedBox(height: 24),
+              if (_errorMessage != null) ...[
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.redAccent),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+              ],
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _signIn,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
-            ),
-
-            const SizedBox(height: 32),
-
-            const Text(
-              'Sign In',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/signup');
+                  },
+                  child: const Text(
+                    "Don't have an account? Sign Up",
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
               ),
-            ),
-
-            const SizedBox(height: 40),
-
-            _buildLabel('User Name:'),
-            const SizedBox(height: 6),
-            _buildTextField(_usernameController),
-
-            const SizedBox(height: 16),
-
-            _buildLabel('Password:'),
-            const SizedBox(height: 6),
-            _buildTextField(_passwordController, obscure: true),
-
-            const SizedBox(height: 24),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildSmallButton('Sign In', _handleLogin),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildSmallButton('Sign Up', () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SignUpPage()),
-                  );
-                }),
-              ],
-            ),
-
-            const SizedBox(height: 40),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
+  Widget _buildInputField(String label, TextEditingController controller, {bool obscure = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        TextField(
+          controller: controller,
+          obscureText: obscure,
+          style: const TextStyle(color: Colors.white),
+          decoration: _inputDecoration(),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, {bool obscure = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: obscure,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.grey[800],
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide.none,
+  Widget _buildLabel(String label) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _buildSmallButton(String text, VoidCallback onPressed) {
-    return SizedBox(
-      width: 100,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4CAF50),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        ),
-        onPressed: onPressed,
-        child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+  InputDecoration _inputDecoration() {
+    return const InputDecoration(
+      filled: true,
+      fillColor: Colors.grey,
+      contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        borderSide: BorderSide.none,
       ),
     );
   }

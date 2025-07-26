@@ -1,38 +1,63 @@
-import 'package:flutter/material.dart'; // For material design components
-import 'pages/alerts_page.dart'; // For alerts page
-import 'pages/actions_page.dart'; // For actions page
-import 'pages/events_page.dart'; // For events page
-import 'widgets/bottom_nav_bar.dart'; // For bottom navigation bar
+import 'package:flutter/material.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 
-const darkBackground = Color(0xFF121212); // Dark background color for the app
+import 'pages/alerts_page.dart';
+import 'pages/actions_page.dart';
+import 'pages/events_page.dart';
+import 'pages/login_page.dart';
+import 'pages/signup_page.dart';
+import 'widgets/bottom_nav_bar.dart';
 
-// Main entry point of the application
-void main() => runApp(const InboxApp());
+const darkBackground = Color(0xFF121212);
 
-/// The main application widget
+final HttpLink httpLink = HttpLink(
+  'https://kf6iirlcgrbqdmr2b6nq5s6g3q.appsync-api.ca-central-1.amazonaws.com/graphql',
+  defaultHeaders: {
+    'x-api-key': 'da2-gyewjbxhlvdarogtzp5mbyrm6m',
+  },
+);
+
+final ValueNotifier<GraphQLClient> client = ValueNotifier(
+  GraphQLClient(
+    link: httpLink,
+    cache: GraphQLCache(store: InMemoryStore()),
+  ),
+);
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initHiveForFlutter(); // Required for caching if you use it
+  runApp(const InboxApp());
+}
+
 class InboxApp extends StatelessWidget {
   const InboxApp({super.key});
 
-  // Builds the main application
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: const HomePage(),
+    return GraphQLProvider(
+      client: client,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark(),
+        initialRoute: '/login',
+        routes: {
+          '/login': (context) => const LoginPage(),
+          '/signup': (context) => const SignUpPage(),
+          '/menu': (context) => const HomePage(),
+        },
+      ),
     );
   }
 }
 
-// Displaying different pages
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-  
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-// State for the HomePage widget
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
@@ -42,14 +67,12 @@ class _HomePageState extends State<HomePage> {
     EventsPage(),
   ];
 
-  // Handles bottom navigation bar item taps
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
-  // Builds the HomePage with a bottom navigation bar
   @override
   Widget build(BuildContext context) {
     return Scaffold(
