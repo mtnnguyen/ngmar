@@ -26,7 +26,6 @@ class PharmacyScenePainter extends CustomPainter {
     final double buildingWidth = size.width * 0.6;
     final double buildingHeight = size.height * 0.35;
 
-    // Draw the building
     final Rect building = Rect.fromLTWH(buildingLeft, buildingTop, buildingWidth, buildingHeight);
     canvas.drawRect(building, stroke);
     canvas.drawRect(building, fill);
@@ -50,13 +49,21 @@ class PharmacyScenePainter extends CustomPainter {
     canvas.drawRRect(sign, stroke);
     _drawText(canvas, 'PHARMACY', signRect.left + 14, signRect.top + 6, 14, canvas);
 
+    // Compliance tag
+    _drawText(canvas, '✔ In Compliance', buildingLeft, signRect.top - 20, 12, canvas);
+
+    // RCON tracker beacon (pulsing glow)
+    final rconCenter = Offset(buildingLeft + buildingWidth - 14, buildingTop - 16);
+    canvas.drawCircle(rconCenter, 6, glow);
+    canvas.drawCircle(rconCenter, 2, stroke);
+    _drawText(canvas, 'RCON', rconCenter.dx - 16, rconCenter.dy - 18, 10, canvas);
+
     // Door frames
     final doorWidth = buildingWidth * 0.25;
     final doorHeight = buildingHeight * 0.6;
     final double doorLeft = buildingLeft + (buildingWidth - doorWidth) / 2;
     final double doorTop = buildingTop + (buildingHeight - doorHeight);
 
-    // Draw doors
     final leftDoor = Rect.fromLTWH(doorLeft, doorTop, doorWidth / 2, doorHeight);
     final rightDoor = Rect.fromLTWH(doorLeft + doorWidth / 2, doorTop, doorWidth / 2, doorHeight);
     canvas.drawRect(leftDoor, stroke);
@@ -67,7 +74,16 @@ class PharmacyScenePainter extends CustomPainter {
       stroke,
     );
 
-    // Windows frames
+    // Pharmacist character (simple glowing dot at counter if present)
+    final pharmacistPulse = Paint()
+      ..color = Colors.greenAccent.withOpacity(0.5 + 0.5 * sin(animationValue * 2 * pi))
+      ..style = PaintingStyle.fill;
+
+    final pharmacistCenter = Offset(doorLeft + doorWidth / 2, doorTop - 12);
+    canvas.drawCircle(pharmacistCenter, 6, pharmacistPulse);
+    _drawText(canvas, 'Pharmacist', pharmacistCenter.dx - 32, pharmacistCenter.dy - 18, 10, canvas);
+
+    // Windows
     final windowWidth = buildingWidth * 0.2;
     final windowHeight = doorHeight * 0.7;
     final double windowTop = doorTop;
@@ -85,36 +101,36 @@ class PharmacyScenePainter extends CustomPainter {
       canvas.drawLine(Offset(rightWindow.left + 6, dy), Offset(rightWindow.right - 6, dy), stroke);
     }
 
+    // Indoor/Outdoor labels
+    _drawText(canvas, 'Indoor', leftWindow.left + 4, leftWindow.bottom + 4, 10, canvas);
+    _drawText(canvas, 'Indoor', rightWindow.left + 4, rightWindow.bottom + 4, 10, canvas);
+    _drawText(canvas, 'Outdoor', doorLeft + 4, rightDoor.bottom + 6, 10, canvas);
+
     // Surveillance Camera
     final cameraMount = Offset(buildingLeft - 28, windowTop + 10);
     const double armLength = 24;
     final double rotation = sin(animationValue * 2 * pi) * pi / 10;
 
-    // Draw camera arm
     final Offset headPivot = Offset(
       cameraMount.dx + armLength * cos(rotation),
       cameraMount.dy + armLength * sin(rotation),
     );
 
-    // Draw camera head
     final cameraBody = Rect.fromCenter(center: headPivot, width: 26, height: 14);
     final lensCenter = Offset(headPivot.dx + 10, headPivot.dy);
 
-    // Wire
     final wirePath = Path()
       ..moveTo(cameraMount.dx - 8, cameraMount.dy + 6)
       ..quadraticBezierTo(
           cameraMount.dx - 20, cameraMount.dy + 20, buildingLeft, buildingTop + buildingHeight);
     canvas.drawPath(wirePath, stroke);
 
-    // Draw camera
     canvas.drawCircle(cameraMount, 4, glow);
     canvas.drawLine(cameraMount, headPivot, stroke);
     canvas.drawRect(cameraBody, stroke);
     canvas.drawCircle(lensCenter, 3, stroke);
   }
 
-  // Helper function
   void _drawText(Canvas canvas, String text, double x, double y, double size, Canvas ctx) {
     final textSpan = TextSpan(
       text: text,
@@ -130,7 +146,7 @@ class PharmacyScenePainter extends CustomPainter {
     )..layout();
     tp.paint(ctx, Offset(x, y));
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
