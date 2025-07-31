@@ -80,8 +80,8 @@ class _LoginPageState extends State<LoginPage> {
               Center(
               child: Column(
                 children: [
-                  Image.network(
-                    'https://images.squarespace-cdn.com/content/v1/67fa8c0fe003dd6c78c62313/da9f915c-8ad6-4e53-93b4-8ac733863bcf/Artboard+1survei%402x.png?format=1500w',
+                  Image.asset(
+                    'assets/images/surveil_logo.jpeg',
                     height: 100,
                   ),
       const SizedBox(height: 20),
