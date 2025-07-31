@@ -7,6 +7,7 @@ class GraphQLService {
     const String url = 'https://kf6iirlcgrbqdmr2b6nq5s6g3q.appsync-api.ca-central-1.amazonaws.com/graphql';
     const String apiKey = 'da2-gyewjbxhlvdarogtzp5mbyrm6m';
 
+    // The raw GraphQL mutation query
     final String rawQuery = '''
       mutation {
         signin(user_name: "$username", password: "$password", site_name: "$siteName") {
@@ -20,6 +21,7 @@ class GraphQLService {
       }
     ''';
 
+    // Make the HTTP POST request
     final response = await http.post(
       Uri.parse(url),
       headers: {
@@ -29,6 +31,7 @@ class GraphQLService {
       body: jsonEncode({'query': rawQuery}),
     );
 
+    // Check the response status and parse the JSON
     if (response.statusCode == 200) {
       final Map<String, dynamic> body = jsonDecode(response.body);
       final data = body['data']?['signin'];
@@ -45,6 +48,7 @@ class GraphQLService {
     const String url = 'https://l5a4sfcxxfbj3icqefjhoup4ti.appsync-api.ca-central-1.amazonaws.com/graphql';
     const String apiKey = 'da2-3g2r42737jf73igdhfsrp2mh2y';
 
+    // The raw GraphQL mutation query
     const String rawQuery = r'''
       mutation Signup($party: PartyInput!, $site_name: String!) {
         signup(party: $party, site_name: $site_name) {
@@ -60,6 +64,7 @@ class GraphQLService {
       }
     ''';
 
+    // Make the HTTP POST request
     final response = await http.post(
       Uri.parse(url),
       headers: {
@@ -75,6 +80,7 @@ class GraphQLService {
       }),
     );
 
+    // Check the response status and parse the JSON
     if (response.statusCode == 200) {
       final Map<String, dynamic> body = jsonDecode(response.body);
       final data = body['data']?['signup'];
@@ -96,6 +102,7 @@ class GraphQLService {
     const String url = 'https://tb5xwefsybcitbefa3wksxrazm.appsync-api.ca-central-1.amazonaws.com/graphql';
     const String apiKey = 'da2-7lmmoz642fb3bakwqc4e5k6ytq';
 
+    // The raw GraphQL query
     const String query = r'''
       query GetAlerts($site_name: String!, $from_date: AWSDateTime!, $to_date: AWSDateTime!, $records_per_page: Int!) {
         getAlerts(site_name: $site_name, from_date: $from_date, to_date: $to_date, records_per_page: $records_per_page) {
@@ -120,6 +127,7 @@ class GraphQLService {
       }
     ''';
 
+    // Make the HTTP POST request
     final response = await http.post(
       Uri.parse(url),
       headers: {
@@ -137,6 +145,7 @@ class GraphQLService {
       }),
     );
 
+    // Check the response status and parse the JSON
     if (response.statusCode == 200) {
       final Map<String, dynamic> body = jsonDecode(response.body);
       final alerts = body['data']?['getAlerts']?['alerts'] as List?;

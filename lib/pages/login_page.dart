@@ -1,29 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'graphql_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
+  // This widget is the login page application.
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
+// This is the state for the login page.
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // This boolean of sign-in button.
   bool _isLoading = false;
   String? _errorMessage;
 
+  // This method is called when the sign-in button is pressed.
   Future<void> _signIn() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
+    // Validate input
     try {
-      final client = GraphQLProvider.of(context).value;
       final service = GraphQLService();
 
       final data = await service.signin(
@@ -32,6 +35,7 @@ class _LoginPageState extends State<LoginPage> {
         'test_site', // This should match your cURL example
       );
 
+      // Check if data is null or contains an error code
       if (data == null) {
         setState(() {
           _errorMessage = 'Something went wrong. Please try again.';
@@ -56,6 +60,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // This method builds the UI for the login page.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,6 +97,7 @@ class _LoginPageState extends State<LoginPage> {
   ),
 ),
 
+              // This is the title of the login page.
               const SizedBox(height: 30),
               _buildInputField('User name', _usernameController),
               _buildInputField('Password', _passwordController, obscure: true),
@@ -104,6 +110,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 12),
               ],
+              // This is the sign-in button.
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -115,11 +122,13 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  // This is the text inside the sign-in button.
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
+              // This is the sign-up button.
               const SizedBox(height: 12),
               Center(
                 child: TextButton(
@@ -139,6 +148,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // This method builds an input field with a label.
   Widget _buildInputField(String label, TextEditingController controller, {bool obscure = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,6 +165,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // This method builds a label for the input field.
   Widget _buildLabel(String label) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
@@ -163,6 +174,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
 
+  // This method builds the input decoration for the text fields.
   InputDecoration _inputDecoration() {
     return const InputDecoration(
       filled: true,
