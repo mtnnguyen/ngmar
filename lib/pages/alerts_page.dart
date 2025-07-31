@@ -26,26 +26,46 @@ class _AlertsPageState extends State<AlertsPage> {
 
   Future<void> _fetchAlerts() async {
     final service = GraphQLService();
+
+    // Format AWSDateTime without milliseconds
+    String formatAwsDateTime(DateTime dt) =>
+        dt.toUtc().toIso8601String().split('.').first + 'Z';
+
+    final now = DateTime.now();
+    final fromDate = formatAwsDateTime(now.subtract(const Duration(days: 90)));
+    final toDate = formatAwsDateTime(now);
+
     final alerts = await service.getAlerts(
       siteName: 'test_site',
-      fromDate: '2025-07-01T00:00:00Z',
-      toDate: '2025-07-26T23:59:59Z',
+      fromDate: fromDate,
+      toDate: toDate,
     );
 
-    if (alerts != null) {
-      setState(() {
-        filteredAlerts = alerts.map((alert) {
-          return {
-            ...alert,
-            'title': alert['alert_type'] ?? 'Alert',
-            'preview': alert['alert_status'] ?? 'Status',
-            'read': false,
-            'date': DateTime.tryParse(alert['create_timestamp'] ?? '') ?? DateTime.now(),
-          };
-        }).toList();
-      });
-    }
-    setState(() => isLoading = false);
+    print('⚠️ Raw alerts received: $alerts');
+
+    setState(() {
+      filteredAlerts = (alerts != null && alerts.isNotEmpty)
+          ? alerts.map((alert) {
+              return {
+                ...alert,
+                'title': alert['alert_type'] ?? 'Alert',
+                'preview': alert['alert_status'] ?? 'Status',
+                'read': false,
+                'date': DateTime.tryParse(alert['create_timestamp'] ?? '') ??
+                    DateTime.now(),
+              };
+            }).toList()
+          : [
+              {
+                'title': 'Test Alert',
+                'preview': 'This is a mock alert preview.',
+                'read': false,
+                'date': DateTime.now(),
+                'image_url': null,
+              }
+            ];
+      isLoading = false;
+    });
   }
 
   void _sortAlerts(String order) {
@@ -171,7 +191,9 @@ class _AlertsPageState extends State<AlertsPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : filteredAlerts.isEmpty
-              ? const Center(child: Text('No alerts found.', style: TextStyle(color: Colors.white)))
+              ? const Center(
+                  child: Text('No alerts found.', style: TextStyle(color: Colors.white)),
+                )
               : SafeArea(
                   child: ListView.builder(
                     padding: const EdgeInsets.only(bottom: 80),

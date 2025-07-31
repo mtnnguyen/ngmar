@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'validate_mobile_page.dart';
 import 'graphql_service.dart';
 
-// SignUpPage is a screen for user registration.
-// It includes fields for username, password, first name, last name, email, and mobile number.
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -11,7 +9,6 @@ class SignUpPage extends StatefulWidget {
   State<SignUpPage> createState() => _SignUpPageState();
 }
 
-// _SignUpPageState manages the state of SignUpPage.
 class _SignUpPageState extends State<SignUpPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -28,10 +25,14 @@ class _SignUpPageState extends State<SignUpPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
+        title: const Text(
+          'Sign Up',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
         backgroundColor: const Color(0xFF1E1E1E),
         iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 0,
-        leading: const BackButton(),
+        elevation: 1,
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -40,28 +41,21 @@ class _SignUpPageState extends State<SignUpPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
-                child: Image.network(
-                  'https://images.squarespace-cdn.com/content/v1/67fa8c0fe003dd6c78c62313/da9f915c-8ad6-4e53-93b4-8ac733863bcf/Artboard+1survei%402x.png?format=1500w',
+                child: Image.asset(
+                  'lib/images/logo.jpeg',
                   height: 100,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Center(
-                child: Text(
-                  'Sign Up',
-                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 30),
 
               _buildDisabledField('Customer', 'Display but not editable'),
               _buildDropdownField('Site', _selectedSite),
-              _buildInputField('User name', _usernameController),
-              _buildInputField('Password', _passwordController, obscure: true),
-              _buildInputField('First Name', _firstNameController),
-              _buildInputField('Last Name', _lastNameController),
-              _buildInputField('Email', _emailController),
-              _buildInputField('Mobile', _mobileController),
+              _buildInputField('User name', _usernameController, hintText: 'JohnDoe123'),
+              _buildInputField('Password', _passwordController, obscure: true, hintText: '••••••••'),
+              _buildInputField('First Name', _firstNameController, hintText: 'John'),
+              _buildInputField('Last Name', _lastNameController, hintText: 'Doe'),
+              _buildInputField('Email', _emailController, hintText: 'john@example.com'),
+              _buildInputField('Mobile', _mobileController, hintText: '+1234567890'),
 
               const SizedBox(height: 24),
               SizedBox(
@@ -87,7 +81,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                     final party = {
                       'first_name': _firstNameController.text.trim(),
-                      'middle_name': '', // Required by API, safe to leave empty
+                      'middle_name': '',
                       'last_name': _lastNameController.text.trim(),
                       'user_name': _usernameController.text.trim(),
                       'password': _passwordController.text.trim(),
@@ -118,7 +112,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       );
                     }
                   },
-
                   child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
@@ -145,16 +138,13 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  // Uses a dropdown field
   Widget _buildDropdownField(String label, String selected) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(label),
         Theme(
-          data: Theme.of(context).copyWith(
-            canvasColor: Colors.grey[900], // dropdown background
-          ),
+          data: Theme.of(context).copyWith(canvasColor: Colors.grey[900]),
           child: DropdownButtonFormField<String>(
             value: selected,
             iconEnabledColor: Colors.white,
@@ -178,9 +168,8 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  // Helper method
   Widget _buildInputField(String label, TextEditingController controller,
-      {bool obscure = false}) {
+      {bool obscure = false, String? hintText}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -189,14 +178,13 @@ class _SignUpPageState extends State<SignUpPage> {
           controller: controller,
           obscureText: obscure,
           style: const TextStyle(color: Colors.white),
-          decoration: _inputDecoration(),
+          decoration: _inputDecoration(hintText: hintText),
         ),
         const SizedBox(height: 16),
       ],
     );
   }
 
-  // Helper method
   Widget _buildLabel(String label) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
@@ -205,13 +193,14 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       );
 
-  // Helper method
-  InputDecoration _inputDecoration() {
-    return const InputDecoration(
+  InputDecoration _inputDecoration({String? hintText}) {
+    return InputDecoration(
       filled: true,
       fillColor: Colors.grey,
-      contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-      border: OutlineInputBorder(
+      hintText: hintText,
+      hintStyle: const TextStyle(color: Colors.white38),
+      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      border: const OutlineInputBorder(
         borderRadius: BorderRadius.all(Radius.circular(8)),
         borderSide: BorderSide.none,
       ),
