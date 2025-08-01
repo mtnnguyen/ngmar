@@ -27,13 +27,11 @@ class _AlertsPageState extends State<AlertsPage> {
   Future<void> _fetchAlerts() async {
     final service = GraphQLService();
 
-    // Format AWSDateTime without milliseconds
-    String formatAwsDateTime(DateTime dt) =>
-        dt.toUtc().toIso8601String().split('.').first + 'Z';
+    // Based on backend-confirmed format
+    const fromDate = '2025-07-25T00:00:00Z';
+    const toDate = '2025-08-01T23:59:59Z';
 
-    final now = DateTime.now();
-    final fromDate = formatAwsDateTime(now.subtract(const Duration(days: 90)));
-    final toDate = formatAwsDateTime(now);
+    print('Fetching alerts for siteName "test_site" from $fromDate to $toDate');
 
     final alerts = await service.getAlerts(
       siteName: 'test_site',
@@ -41,7 +39,7 @@ class _AlertsPageState extends State<AlertsPage> {
       toDate: toDate,
     );
 
-    print('⚠️ Raw alerts received: $alerts');
+    print('Raw alerts received: $alerts');
 
     setState(() {
       filteredAlerts = (alerts != null && alerts.isNotEmpty)
@@ -51,14 +49,15 @@ class _AlertsPageState extends State<AlertsPage> {
                 'title': alert['alert_type'] ?? 'Alert',
                 'preview': alert['alert_status'] ?? 'Status',
                 'read': false,
-                'date': DateTime.tryParse(alert['create_timestamp'] ?? '') ??
-                    DateTime.now(),
+                'date': DateTime.tryParse(
+                  alert['create_timestamp']?.replaceFirst(RegExp(r'\+00:00$'), 'Z') ?? ''
+                ) ?? DateTime.now(),
               };
             }).toList()
           : [
               {
-                'title': 'Test Alert',
-                'preview': 'This is a mock alert preview.',
+                'title': 'No alerts found',
+                'preview': 'No alerts found between July 25 and Aug 1.',
                 'read': false,
                 'date': DateTime.now(),
                 'image_url': null,

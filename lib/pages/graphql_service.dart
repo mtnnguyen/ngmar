@@ -86,7 +86,7 @@ class GraphQLService {
     }
   }
 
-  // getAlerts query with debug logging
+  // getAlerts query using site_name (not site_id)
   Future<List<Map<String, dynamic>>?> getAlerts({
     required String siteName,
     required String fromDate,
@@ -141,13 +141,13 @@ class GraphQLService {
       final Map<String, dynamic> body = jsonDecode(response.body);
 
       // Debug print full response
-      print('📦 getAlerts full response: $body');
+      print('getAlerts full response: $body');
 
       final alerts = body['data']?['getAlerts']?['alerts'];
       if (alerts is List) {
         return alerts.cast<Map<String, dynamic>>();
       } else {
-        print('⚠️ alerts field is missing or not a List: ${body['data']?['getAlerts']}');
+        print('alerts field is missing or not a List: ${body['data']?['getAlerts']}');
       }
 
       return null;

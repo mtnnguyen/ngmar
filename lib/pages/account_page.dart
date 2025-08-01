@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 
+// This page serves as the account management section of the app
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
 
+  // Builds the account page UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,6 +23,7 @@ class AccountPage extends StatelessWidget {
         children: [
           const SizedBox(height: 24),
 
+          // Profile picture with profile picture icon
           Stack(
             alignment: Alignment.center,
             children: [
@@ -136,6 +139,7 @@ class AccountPage extends StatelessWidget {
   }
 }
 
+// Widget for account options
 class _AccountOption extends StatelessWidget {
   final IconData icon;
   final String label;
