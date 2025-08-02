@@ -1,3 +1,5 @@
+// Static data for alerts
+// This data is used to simulate alerts in the application (not anymore).
 final List<Map<String, dynamic>> allAlerts = [
   {
     'title': 'Welcome to New Inbox',

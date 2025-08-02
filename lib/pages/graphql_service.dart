@@ -7,6 +7,7 @@ class GraphQLService {
     const String url = 'https://kf6iirlcgrbqdmr2b6nq5s6g3q.appsync-api.ca-central-1.amazonaws.com/graphql';
     const String apiKey = 'da2-gyewjbxhlvdarogtzp5mbyrm6m';
 
+    // GraphQL mutation for signin
     final String query = r'''
       mutation ($user_name: String!, $password: String!, $site_name: String!) {
         signin(user_name: $user_name, password: $password, site_name: $site_name) {
@@ -20,7 +21,7 @@ class GraphQLService {
       }
     ''';
 
-  
+    // Prepare the request
     final response = await http.post(
       Uri.parse(url),
       headers: {
@@ -37,8 +38,11 @@ class GraphQLService {
       }),
     );
 
+    // Debug print the full response
+    print('Signin response status: ${response.statusCode}');
     print('Response body: ${response.body}');
 
+    // Check the response status and parse the body
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       if (body['errors'] != null) {
@@ -59,7 +63,7 @@ class GraphQLService {
     const String url = 'https://l5a4sfcxxfbj3icqefjhoup4ti.appsync-api.ca-central-1.amazonaws.com/graphql';
     const String apiKey = 'da2-3g2r42737jf73igdhfsrp2mh2y';
 
-
+    // GraphQL mutation for signup
     const String rawQuery = r'''
     curl -X POST \
     https://l5a4sfcxxfbj3icqefjhoup4ti.appsync-api.ca-central-1.amazonaws.com/graphql \
@@ -83,6 +87,7 @@ class GraphQLService {
       }'
     ''';
 
+    // Prepare the request
     final response = await http.post(
       Uri.parse(url),
       headers: {
@@ -98,6 +103,7 @@ class GraphQLService {
       }),
     );
 
+    // Debug print the full response
     if (response.statusCode == 200) {
       final Map<String, dynamic> body = jsonDecode(response.body);
       final data = body['data']?['signup'];
@@ -119,6 +125,7 @@ class GraphQLService {
     const String url = 'https://tb5xwefsybcitbefa3wksxrazm.appsync-api.ca-central-1.amazonaws.com/graphql';
     const String apiKey = 'da2-7lmmoz642fb3bakwqc4e5k6ytq';
 
+    // GraphQL query for getAlerts
     const String query = r'''
       query GetAlerts($site_name: String!, $from_date: AWSDateTime!, $to_date: AWSDateTime!, $records_per_page: Int!) {
         getAlerts(site_name: $site_name, from_date: $from_date, to_date: $to_date, records_per_page: $records_per_page) {
@@ -143,6 +150,7 @@ class GraphQLService {
       }
     ''';
 
+    // Prepare the request
     final response = await http.post(
       Uri.parse(url),
       headers: {
@@ -160,12 +168,14 @@ class GraphQLService {
       }),
     );
 
+    // Debug print the full response
     if (response.statusCode == 200) {
       final Map<String, dynamic> body = jsonDecode(response.body);
 
       // Debug print full response
       print('getAlerts full response: $body');
 
+      // Check for errors in the response
       final alerts = body['data']?['getAlerts']?['alerts'];
       if (alerts is List) {
         return alerts.cast<Map<String, dynamic>>();
@@ -173,6 +183,7 @@ class GraphQLService {
         print('alerts field is missing or not a List: ${body['data']?['getAlerts']}');
       }
 
+      // If the alerts field is not a list, return null
       return null;
     } else {
       print('[HTTP ERROR - getAlerts] Status: ${response.statusCode}');

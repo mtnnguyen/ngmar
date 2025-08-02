@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+/// A page that displays indoor surveillance information.
 class IndoorSurveillancePage extends StatelessWidget {
   const IndoorSurveillancePage({super.key});
 
+  /// The route name for this page.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

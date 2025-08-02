@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+/// Custom painter for the pharmacy scene, including animated elements.
 class PharmacyScenePainter extends CustomPainter {
   final double animationValue;
   PharmacyScenePainter({required this.animationValue});
 
+  /// Paints the pharmacy scene with animated elements.
   @override
   void paint(Canvas canvas, Size size) {
     final stroke = Paint()
@@ -12,10 +14,12 @@ class PharmacyScenePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
+    // Background fill
     final fill = Paint()
       ..color = Colors.blueAccent.withOpacity(0.1)
       ..style = PaintingStyle.fill;
 
+    // Draw the background
     final glow = Paint()
       ..color = Colors.blueAccent.withOpacity(0.4 + 0.4 * sin(animationValue * 2 * pi))
       ..style = PaintingStyle.fill;
@@ -26,6 +30,7 @@ class PharmacyScenePainter extends CustomPainter {
     final double buildingWidth = size.width * 0.6;
     final double buildingHeight = size.height * 0.35;
 
+    // Draw the building
     final Rect building = Rect.fromLTWH(buildingLeft, buildingTop, buildingWidth, buildingHeight);
     canvas.drawRect(building, stroke);
     canvas.drawRect(building, fill);
@@ -64,6 +69,7 @@ class PharmacyScenePainter extends CustomPainter {
     final double doorLeft = buildingLeft + (buildingWidth - doorWidth) / 2;
     final double doorTop = buildingTop + (buildingHeight - doorHeight);
 
+    // Draw the door frames
     final leftDoor = Rect.fromLTWH(doorLeft, doorTop, doorWidth / 2, doorHeight);
     final rightDoor = Rect.fromLTWH(doorLeft + doorWidth / 2, doorTop, doorWidth / 2, doorHeight);
     canvas.drawRect(leftDoor, stroke);
@@ -78,7 +84,8 @@ class PharmacyScenePainter extends CustomPainter {
     final pharmacistPulse = Paint()
       ..color = Colors.greenAccent.withOpacity(0.5 + 0.5 * sin(animationValue * 2 * pi))
       ..style = PaintingStyle.fill;
-
+    
+    // Draw the pharmacist at the counter
     final pharmacistCenter = Offset(doorLeft + doorWidth / 2, doorTop - 12);
     canvas.drawCircle(pharmacistCenter, 6, pharmacistPulse);
     _drawText(canvas, 'Pharmacist', pharmacistCenter.dx - 32, pharmacistCenter.dy - 18, 10, canvas);
@@ -88,6 +95,7 @@ class PharmacyScenePainter extends CustomPainter {
     final windowHeight = doorHeight * 0.7;
     final double windowTop = doorTop;
 
+    // Draw the windows on both sides of the door
     final leftWindow = Rect.fromLTWH(buildingLeft + 12, windowTop, windowWidth, windowHeight);
     final rightWindow = Rect.fromLTWH(
         buildingLeft + buildingWidth - windowWidth - 12, windowTop, windowWidth, windowHeight);
@@ -111,26 +119,31 @@ class PharmacyScenePainter extends CustomPainter {
     const double armLength = 24;
     final double rotation = sin(animationValue * 2 * pi) * pi / 10;
 
+    // Draw the camera arm
     final Offset headPivot = Offset(
       cameraMount.dx + armLength * cos(rotation),
       cameraMount.dy + armLength * sin(rotation),
     );
 
+    // Draw the camera head
     final cameraBody = Rect.fromCenter(center: headPivot, width: 26, height: 14);
     final lensCenter = Offset(headPivot.dx + 10, headPivot.dy);
 
+    // Draw the camera lens
     final wirePath = Path()
       ..moveTo(cameraMount.dx - 8, cameraMount.dy + 6)
       ..quadraticBezierTo(
           cameraMount.dx - 20, cameraMount.dy + 20, buildingLeft, buildingTop + buildingHeight);
     canvas.drawPath(wirePath, stroke);
 
+    // Draw the camera components
     canvas.drawCircle(cameraMount, 4, glow);
     canvas.drawLine(cameraMount, headPivot, stroke);
     canvas.drawRect(cameraBody, stroke);
     canvas.drawCircle(lensCenter, 3, stroke);
   }
 
+  /// Draws text on the canvas at a specified position.
   void _drawText(Canvas canvas, String text, double x, double y, double size, Canvas ctx) {
     final textSpan = TextSpan(
       text: text,
@@ -147,6 +160,7 @@ class PharmacyScenePainter extends CustomPainter {
     tp.paint(ctx, Offset(x, y));
   }
 
+  /// Returns true if the painter should repaint.
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

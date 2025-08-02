@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// ValidateMobilePage is a page for validating the user's mobile number
 class ValidateMobilePage extends StatefulWidget {
   final String mobileNumber;
 
@@ -13,9 +14,11 @@ class ValidateMobilePage extends StatefulWidget {
 class _ValidateMobilePageState extends State<ValidateMobilePage> {
   final TextEditingController _codeController = TextEditingController();
 
+  // Submit the verification code entered by the user
   void _submitCode() {
     final code = _codeController.text.trim();
 
+    // Simulate verification logic
     if (code == '1234') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -23,7 +26,7 @@ class _ValidateMobilePageState extends State<ValidateMobilePage> {
           backgroundColor: Colors.green,
         ),
       );
-      // TODO: Navigate to the next screen
+      // TODO
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -33,7 +36,8 @@ class _ValidateMobilePageState extends State<ValidateMobilePage> {
       );
     }
   }
-
+  
+  // Resend the verification code
   void _resendCode() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -43,6 +47,7 @@ class _ValidateMobilePageState extends State<ValidateMobilePage> {
     );
   }
 
+  // Build the UI for the ValidateMobilePage
   @override
   Widget build(BuildContext context) {
     return Scaffold(

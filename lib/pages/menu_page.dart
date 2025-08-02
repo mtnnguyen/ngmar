@@ -6,6 +6,7 @@ import 'my_products_page.dart';
 class MenuPage extends StatelessWidget {
   const MenuPage({super.key});
 
+  /// Builds the menu page UI.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,9 +55,6 @@ class MenuPage extends StatelessWidget {
                             children: [
                               CircleAvatar(
                                 radius: 28,
-                                backgroundImage: NetworkImage(
-                                  'https://media.licdn.com/dms/image/v2/D5603AQGPzsD0Cat56w/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1730082888067?e=1755734400&v=beta&t=5D6v0NsddCXrTvRL7T_p9iUGQbi8RHoMNvEP9_S0pZk',
-                                ),
                               ),
                               SizedBox(width: 16),
                               Expanded(

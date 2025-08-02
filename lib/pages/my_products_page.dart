@@ -7,13 +7,16 @@ import 'outdoor_surveillance_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
+/// MyProductsPage displays a list of product sections with an animated header.
 class MyProductsPage extends StatefulWidget {
   const MyProductsPage({super.key});
 
+  // The static route for this page.
   @override
   State<MyProductsPage> createState() => _MyProductsPageState();
 }
 
+// The state for MyProductsPage, managing the animation and section tiles.
 class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
@@ -36,6 +39,7 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
     },
   ];
 
+  /// Initializes the animation controller for the animated header.
   @override
   void initState() {
     super.initState();
@@ -45,12 +49,14 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
     )..repeat();
   }
 
+  /// Disposes the animation controller when the widget is removed from the widget tree.
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
+  /// Builds the animated header using a CustomPainter.
   Widget _buildAnimatedHeader() {
     return SizedBox(
       height: 240,
@@ -66,6 +72,7 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
     );
   }
 
+  /// Builds a section tile with a title and icon.
   Widget _buildSectionTile(String title, IconData icon) {
     return Card(
       color: Colors.grey.shade900,
@@ -107,6 +114,7 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
     );
   }
 
+  /// Builds the main UI of the MyProductsPage.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -5,13 +5,16 @@ import 'menu_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
+/// AlertsPage displays a list of alerts with options to filter, sort, and view details.
 class AlertsPage extends StatefulWidget {
   const AlertsPage({super.key});
 
+  // Since static data for alerts is not used, we now fetch alerts from the GraphQL service.
   @override
   State<AlertsPage> createState() => _AlertsPageState();
 }
 
+/// _AlertsPageState manages the state of the AlertsPage, including fetching and displaying alerts.
 class _AlertsPageState extends State<AlertsPage> {
   final GlobalKey _filterKey = GlobalKey();
   List<Map<String, dynamic>> filteredAlerts = [];
@@ -24,6 +27,7 @@ class _AlertsPageState extends State<AlertsPage> {
     _fetchAlerts();
   }
 
+  /// Fetches alerts from the GraphQL service and updates the state.
   Future<void> _fetchAlerts() async {
     final service = GraphQLService();
 
@@ -33,14 +37,17 @@ class _AlertsPageState extends State<AlertsPage> {
 
     print('Fetching alerts for siteName "test_site" from $fromDate to $toDate');
 
+    // Fetch alerts using the GraphQL service
     final alerts = await service.getAlerts(
       siteName: 'test_site',
       fromDate: fromDate,
       toDate: toDate,
     );
 
+    // Debug print the raw alerts received
     print('Raw alerts received: $alerts');
 
+    // If alerts are null or empty, show a message
     setState(() {
       filteredAlerts = (alerts != null && alerts.isNotEmpty)
           ? alerts.map((alert) {
@@ -67,6 +74,7 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  /// Sorts the alerts based on the selected order.
   void _sortAlerts(String order) {
     setState(() {
       filteredAlerts.sort((a, b) =>
@@ -74,6 +82,7 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  /// Opens the detail view for the selected alert.
   void _openDetail(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': true};
@@ -81,8 +90,10 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  /// Navigates back to the alert list view.
   void _goBack() => setState(() => selectedIndex = null);
 
+  /// Marks the selected alert as unread.
   void _markAsUnread(int index) {
     setState(() {
       filteredAlerts[index] = {...filteredAlerts[index], 'read': false};
@@ -90,6 +101,7 @@ class _AlertsPageState extends State<AlertsPage> {
     });
   }
 
+  /// Navigates to the next or previous alert in the list.
   void _goToNextAlert() {
     if (selectedIndex != null && selectedIndex! < filteredAlerts.length - 1) {
       setState(() {
@@ -102,6 +114,7 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
+  /// Navigates to the previous alert in the list.
   void _goToPreviousAlert() {
     if (selectedIndex != null && selectedIndex! > 0) {
       setState(() {
@@ -114,11 +127,13 @@ class _AlertsPageState extends State<AlertsPage> {
     }
   }
 
+  /// Builds the widget tree for the AlertsPage.
   @override
   Widget build(BuildContext context) {
     return selectedIndex != null ? _buildDetailView() : _buildAlertList();
   }
 
+  /// Builds the detail view for the selected alert.
   Widget _buildDetailView() {
     return Scaffold(
       backgroundColor: darkBackground,
@@ -137,6 +152,7 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
+  /// Builds the list view for displaying alerts.
   Widget _buildAlertList() {
     return Scaffold(
       backgroundColor: darkBackground,
@@ -154,6 +170,7 @@ class _AlertsPageState extends State<AlertsPage> {
             final Offset position =
                 button.localToGlobal(Offset.zero, ancestor: overlay);
 
+            // Calculates the position for the popup menu
             final RelativeRect positionRect = RelativeRect.fromLTRB(
               position.dx,
               position.dy + button.size.height,
@@ -161,6 +178,7 @@ class _AlertsPageState extends State<AlertsPage> {
               0,
             );
 
+            // Show the popup menu for sorting
             final selected = await showMenu<String>(
               context: context,
               position: positionRect,
@@ -170,6 +188,7 @@ class _AlertsPageState extends State<AlertsPage> {
               ],
             );
 
+            // If a sort option was selected, sort the alerts
             if (selected != null) _sortAlerts(selected);
           },
           tooltip: 'Sort Alerts',
@@ -207,12 +226,14 @@ class _AlertsPageState extends State<AlertsPage> {
   }
 }
 
+/// _AlertTile is a widget that displays a single alert in the list.
 class _AlertTile extends StatelessWidget {
   final Map<String, dynamic> alert;
   final VoidCallback onTap;
 
   const _AlertTile({required this.alert, required this.onTap});
 
+  /// Builds the widget tree for the alert tile.
   @override
   Widget build(BuildContext context) {
     return ListTile(

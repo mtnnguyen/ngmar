@@ -7,10 +7,12 @@ class PharmacyGovernancePage extends StatelessWidget {
   final bool pharmacistAtCounter = true;
   final bool unauthorizedPersonnelDetected = false;
 
+  // The static route for this page.
   @override
   Widget build(BuildContext context) {
     final bool alert = !pharmacistAtCounter || unauthorizedPersonnelDetected;
 
+    // Build the Pharmacy Governance page with a header and status indicators.
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pharmacy Governance'),
@@ -40,6 +42,7 @@ class PharmacyGovernancePage extends StatelessWidget {
     );
   }
 
+  /// Builds the pharmacy image with a border indicating alert status.
   Widget _buildPharmacyImage(bool alert) {
     return Container(
       height: 200,
@@ -57,6 +60,7 @@ class PharmacyGovernancePage extends StatelessWidget {
     );
   }
 
+  /// Builds a status row with an icon, label, and status text.
   Widget _buildStatusRow(String label, bool ok) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

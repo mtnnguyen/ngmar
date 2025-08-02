@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'graphql_service.dart';
 import 'package:flutter/gestures.dart';
 
+/// A page that allows users to sign in to the application.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -9,18 +10,21 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
+/// State for the LoginPage that handles user input and authentication.
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
 
+  /// Signs in the user with the provided username and password.
   Future<void> _signIn() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
+    // Validate input
     try {
       final service = GraphQLService();
       final data = await service.signin(
@@ -29,10 +33,12 @@ class _LoginPageState extends State<LoginPage> {
         'test_site',
       );
 
+      // Debugging output
       print('Signing in with username=${_usernameController.text.trim()}, siteName=test_site');
       print('Signing in with password=${_passwordController.text.trim()}');
       print('Signin response: $data');
 
+      // Handle response
       if (data == null) {
         setState(() {
           _errorMessage = 'Something went wrong. Please try again.';
@@ -57,6 +63,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  /// Builds the login page UI.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -171,6 +178,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  /// Builds a text input field with a label.
   Widget _buildInputField(String label, TextEditingController controller, {bool obscure = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,6 +195,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  /// Builds a label for the input fields.
   Widget _buildLabel(String label) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
@@ -195,6 +204,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
 
+  /// Returns the decoration for the input fields.
   InputDecoration _inputDecoration() {
     return const InputDecoration(
       filled: true,
