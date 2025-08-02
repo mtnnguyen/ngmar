@@ -35,17 +35,12 @@ class _AlertsPageState extends State<AlertsPage> {
     const fromDate = '2025-07-25T00:00:00Z';
     const toDate = '2025-08-01T23:59:59Z';
 
-    print('Fetching alerts for siteName "test_site" from $fromDate to $toDate');
-
     // Fetch alerts using the GraphQL service
     final alerts = await service.getAlerts(
       siteName: 'test_site',
       fromDate: fromDate,
       toDate: toDate,
     );
-
-    // Debug print the raw alerts received
-    print('Raw alerts received: $alerts');
 
     // If alerts are null or empty, show a message
     setState(() {

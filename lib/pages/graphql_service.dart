@@ -38,10 +38,6 @@ class GraphQLService {
       }),
     );
 
-    // Debug print the full response
-    print('Signin response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
     // Check the response status and parse the body
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
