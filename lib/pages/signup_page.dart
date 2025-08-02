@@ -87,15 +87,16 @@ class _SignUpPageState extends State<SignUpPage> {
                       'password': _passwordController.text.trim(),
                       'email': _emailController.text.trim(),
                       'mobile': mobile,
-                      'phone': ''
+                      'phone': '',
                     };
 
                     final graphqlService = GraphQLService();
                     final result = await graphqlService.signup(party, 'test_site');
+                    print('party: $party');
 
                     if (result != null && result['error_code'] == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Signup successful!')),
+                        const SnackBar(content: Text('Signup successful123!')),
                       );
                       Navigator.push(
                         context,

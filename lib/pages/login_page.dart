@@ -29,6 +29,10 @@ class _LoginPageState extends State<LoginPage> {
         'test_site',
       );
 
+      print('Signing in with username=${_usernameController.text.trim()}, siteName=test_site');
+      print('Signing in with password=${_passwordController.text.trim()}');
+      print('Signin response: $data');
+
       if (data == null) {
         setState(() {
           _errorMessage = 'Something went wrong. Please try again.';

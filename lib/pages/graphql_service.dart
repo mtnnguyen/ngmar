@@ -7,9 +7,9 @@ class GraphQLService {
     const String url = 'https://kf6iirlcgrbqdmr2b6nq5s6g3q.appsync-api.ca-central-1.amazonaws.com/graphql';
     const String apiKey = 'da2-gyewjbxhlvdarogtzp5mbyrm6m';
 
-    final String rawQuery = '''
-      mutation {
-        signin(user_name: "$username", password: "$password", site_name: "$siteName") {
+    final String query = r'''
+      mutation ($user_name: String!, $password: String!, $site_name: String!) {
+        signin(user_name: $user_name, password: $password, site_name: $site_name) {
           party {
             party_id
             user_name
@@ -20,19 +20,32 @@ class GraphQLService {
       }
     ''';
 
+  
     final response = await http.post(
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
       },
-      body: jsonEncode({'query': rawQuery}),
+      body: jsonEncode({
+        'query': query,
+        'variables': {
+          'user_name': username,
+          'password': password,
+          'site_name': siteName,
+        }
+      }),
     );
 
+    print('Response body: ${response.body}');
+
     if (response.statusCode == 200) {
-      final Map<String, dynamic> body = jsonDecode(response.body);
-      final data = body['data']?['signin'];
-      return data;
+      final body = jsonDecode(response.body);
+      if (body['errors'] != null) {
+        print('[GraphQL ERROR - Signin] ${body['errors']}');
+        return null;
+      }
+      return body['data']?['signin'];
     } else {
       print('[HTTP ERROR - Signin] Status: ${response.statusCode}');
       print(response.body);
@@ -40,24 +53,34 @@ class GraphQLService {
     }
   }
 
+
   // Signup mutation
   Future<Map<String, dynamic>?> signup(Map<String, dynamic> party, String siteName) async {
     const String url = 'https://l5a4sfcxxfbj3icqefjhoup4ti.appsync-api.ca-central-1.amazonaws.com/graphql';
     const String apiKey = 'da2-3g2r42737jf73igdhfsrp2mh2y';
 
+
     const String rawQuery = r'''
-      mutation Signup($party: PartyInput!, $site_name: String!) {
-        signup(party: $party, site_name: $site_name) {
-          party_id
-          user_name
-          first_name
-          last_name
-          email
-          mobile
-          error_code
-          message
+    curl -X POST \
+    https://l5a4sfcxxfbj3icqefjhoup4ti.appsync-api.ca-central-1.amazonaws.com/graphql \
+      -H 'Content-Type: application/json' \
+      -H 'x-api-key: da2-3g2r42737jf73igdhfsrp2mh2y' \
+      -d '{
+        query: "mutation Signup($party: PartyInput!, $site_name: String!) { signup(party: $party, site_name: $site_name) { party_id user_name first_name last_name email mobile error_code message } }",
+        variables: {
+          party: {
+            first_name
+            middle_name
+            last_name
+            user_name
+            password
+            email
+            mobile
+            phone
+          },
+          site_name
         }
-      }
+      }'
     ''';
 
     final response = await http.post(
