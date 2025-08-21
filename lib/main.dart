@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import 'pages/alerts_page.dart';
-import 'pages/actions_page.dart';
-import 'pages/events_page.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';
 import 'widgets/bottom_nav_bar.dart';
@@ -26,18 +24,17 @@ final ValueNotifier<GraphQLClient> client = ValueNotifier(
   ),
 );
 
-// Initialize Hive for caching if needed
+// Main entry point
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initHiveForFlutter(); // Required for caching if you use it
+  await initHiveForFlutter(); // Required for caching if needed
   runApp(const InboxApp());
 }
 
-// InboxApp is the main application widget
+// Main application widget
 class InboxApp extends StatelessWidget {
   const InboxApp({super.key});
 
-  // This widget is the root of the application.
   @override
   Widget build(BuildContext context) {
     return GraphQLProvider(
@@ -56,34 +53,29 @@ class InboxApp extends StatelessWidget {
   }
 }
 
-// HomePage is the main page with a bottom navigation bar
+// Home page with only AlertsPage centered in navigation
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  // This widget is the root of the HomePage.
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-// _HomePageState is the state for HomePage
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  // List of pages for the bottom navigation bar
-  final List<Widget> _pages = const [
-    AlertsPage(),
-    ActionsPage(),
-    EventsPage(),
+  final List<Widget> _pages = [
+    const AlertsPage(), // Only tab
   ];
 
-  // Handle bottom navigation bar item taps
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index >= 0 && index < _pages.length) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
-  // Build the UI for the HomePage
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -27,39 +27,36 @@ class _AlertsPageState extends State<AlertsPage> {
     _fetchAlerts();
   }
 
-  /// Fetches alerts from the GraphQL service and updates the state.
   Future<void> _fetchAlerts() async {
     final service = GraphQLService();
 
-    // Based on backend-confirmed format
-    const fromDate = '2025-07-25T00:00:00Z';
-    const toDate = '2025-08-01T23:59:59Z';
+    const fromDate = '2025-07-01T00:00:00Z';
+    const toDate = '2026-08-25T23:59:59Z';
 
-    // Fetch alerts using the GraphQL service
     final alerts = await service.getAlerts(
-      siteName: 'test_site',
+      siteName: 'TEST_SITE',
       fromDate: fromDate,
       toDate: toDate,
     );
 
-    // If alerts are null or empty, show a message
     setState(() {
       filteredAlerts = (alerts != null && alerts.isNotEmpty)
           ? alerts.map((alert) {
               return {
                 ...alert,
                 'title': alert['alert_type'] ?? 'Alert',
-                'preview': alert['alert_status'] ?? 'Status',
+                'preview': alert['alert_message_code'] ?? 'No message code',
                 'read': false,
                 'date': DateTime.tryParse(
-                  alert['create_timestamp']?.replaceFirst(RegExp(r'\+00:00$'), 'Z') ?? ''
-                ) ?? DateTime.now(),
+                      alert['created_at']?.replaceFirst(RegExp(r'\+00:00$'), 'Z') ?? '',
+                    ) ??
+                    DateTime.now(),
               };
             }).toList()
           : [
               {
                 'title': 'No alerts found',
-                'preview': 'No alerts found between July 25 and Aug 1.',
+                'preview': 'No alerts found between July 25 and Aug 3.',
                 'read': false,
                 'date': DateTime.now(),
                 'image_url': null,
@@ -68,6 +65,7 @@ class _AlertsPageState extends State<AlertsPage> {
       isLoading = false;
     });
   }
+
 
   /// Sorts the alerts based on the selected order.
   void _sortAlerts(String order) {

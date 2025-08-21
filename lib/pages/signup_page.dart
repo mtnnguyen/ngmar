@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
-import 'validate_mobile_page.dart';
 import 'graphql_service.dart';
 
-// SignUpPage is a page for user registration
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
-  // This widget is the root of the SignUpPage.
   @override
   State<SignUpPage> createState() => _SignUpPageState();
 }
 
-// _SignUpPageState is the state for SignUpPage
 class _SignUpPageState extends State<SignUpPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -20,11 +16,9 @@ class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _mobileController = TextEditingController();
 
-  // Default selected site
   String _selectedSite = 'Site 1';
   final List<String> _sites = ['Site 1', 'Site 2', 'Site 3', 'Site 4'];
 
-  // Dispose controllers to free up resources
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +46,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
               const SizedBox(height: 30),
-
               _buildDisabledField('Customer', 'Display but not editable'),
               _buildDropdownField('Site', _selectedSite),
               _buildInputField('User name', _usernameController, hintText: 'JohnDoe123'),
@@ -61,7 +54,6 @@ class _SignUpPageState extends State<SignUpPage> {
               _buildInputField('Last Name', _lastNameController, hintText: 'Doe'),
               _buildInputField('Email', _emailController, hintText: 'john@example.com'),
               _buildInputField('Mobile', _mobileController, hintText: '+1234567890'),
-
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -84,7 +76,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       return;
                     }
 
-                    // Validate mobile number format
                     final party = {
                       'first_name': _firstNameController.text.trim(),
                       'middle_name': '',
@@ -96,22 +87,16 @@ class _SignUpPageState extends State<SignUpPage> {
                       'phone': '',
                     };
 
-                    // Call the GraphQL service to perform signup
                     final graphqlService = GraphQLService();
-                    final result = await graphqlService.signup(party, 'test_site');
+                    final result = await graphqlService.signup(party, 'TEST_SITE');
                     print('party: $party');
+                    print('signup result: $result');
 
-                    // Handle the result of the signup operation
                     if (result != null && result['error_code'] == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Signup successful123!')),
+                        const SnackBar(content: Text('Signup successful!')),
                       );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ValidateMobilePage(mobileNumber: mobile),
-                        ),
-                      );
+                      Navigator.pop(context); // ⬅ Go back to login
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -131,7 +116,6 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  // Build a disabled text field with a label
   Widget _buildDisabledField(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,7 +132,6 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  // Build a dropdown field with a label
   Widget _buildDropdownField(String label, String selected) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,7 +162,6 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  // Build an input field with a label
   Widget _buildInputField(String label, TextEditingController controller,
       {bool obscure = false, String? hintText}) {
     return Column(
@@ -197,7 +179,6 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  // Build a label for input fields
   Widget _buildLabel(String label) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
@@ -206,7 +187,6 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       );
 
-  // Input decoration for text fields
   InputDecoration _inputDecoration({String? hintText}) {
     return InputDecoration(
       filled: true,

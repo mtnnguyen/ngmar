@@ -30,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
       final data = await service.signin(
         _usernameController.text.trim(),
         _passwordController.text.trim(),
-        'test_site',
+        'TEST_SITE',
       );
 
       // Handle response
