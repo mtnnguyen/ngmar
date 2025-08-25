@@ -2,9 +2,20 @@ import 'package:flutter/material.dart';
 import 'account_page.dart';
 import 'my_products_page.dart';
 
-// Displays the main menu page with options for the user.
+/// Displays the main menu page with options for the user.
 class MenuPage extends StatelessWidget {
-  const MenuPage({super.key});
+  final int partyId;
+  final String username;
+  final String password;
+  final String siteName;
+
+  const MenuPage({
+    super.key,
+    required this.partyId,
+    required this.username,
+    required this.password,
+    required this.siteName,
+  });
 
   /// Builds the menu page UI.
   @override
@@ -53,9 +64,7 @@ class MenuPage extends StatelessWidget {
                           child: const Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              CircleAvatar(
-                                radius: 28,
-                              ),
+                              CircleAvatar(radius: 28),
                               SizedBox(width: 16),
                               Expanded(
                                 child: Column(
@@ -104,7 +113,14 @@ class MenuPage extends StatelessWidget {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const MyProductsPage()),
+                            MaterialPageRoute(
+                              builder: (context) => MyProductsPage(
+                                partyId: partyId,
+                                username: username,
+                                password: password,
+                                siteName: siteName,
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -161,7 +177,7 @@ class _FooterLink extends StatelessWidget {
   final VoidCallback onTap;
 
   const _FooterLink({required this.text, required this.onTap});
-  
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

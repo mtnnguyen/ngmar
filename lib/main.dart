@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-
+import 'pages/graphql_service.dart';
 import 'pages/alerts_page.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';
@@ -8,30 +8,21 @@ import 'widgets/bottom_nav_bar.dart';
 
 const darkBackground = Color(0xFF121212);
 
-// GraphQL client setup
 final HttpLink httpLink = HttpLink(
   'https://kf6iirlcgrbqdmr2b6nq5s6g3q.appsync-api.ca-central-1.amazonaws.com/graphql',
-  defaultHeaders: {
-    'x-api-key': 'da2-gyewjbxhlvdarogtzp5mbyrm6m',
-  },
+  defaultHeaders: {'x-api-key': 'da2-gyewjbxhlvdarogtzp5mbyrm6m'},
 );
 
-// Initialize the GraphQL client
 final ValueNotifier<GraphQLClient> client = ValueNotifier(
-  GraphQLClient(
-    link: httpLink,
-    cache: GraphQLCache(store: InMemoryStore()),
-  ),
+  GraphQLClient(link: httpLink, cache: GraphQLCache(store: InMemoryStore())),
 );
 
-// Main entry point
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initHiveForFlutter(); // Required for caching if needed
+  await initHiveForFlutter();
   runApp(const InboxApp());
 }
 
-// Main application widget
 class InboxApp extends StatelessWidget {
   const InboxApp({super.key});
 
@@ -46,16 +37,39 @@ class InboxApp extends StatelessWidget {
         routes: {
           '/login': (context) => const LoginPage(),
           '/signup': (context) => const SignUpPage(),
-          '/menu': (context) => const HomePage(),
+        },
+        onGenerateRoute: (settings) {
+          if (settings.name == '/home') {
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder: (_) => HomePage(
+                username: args['username'],
+                password: args['password'],
+                siteName: args['siteName'],
+                partyId: args['partyId'],
+              ),
+            );
+          }
+          return null;
         },
       ),
     );
   }
 }
 
-// Home page with only AlertsPage centered in navigation
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String username;
+  final String password;
+  final String siteName;
+  final int partyId;
+
+  const HomePage({
+    super.key,
+    required this.username,
+    required this.password,
+    required this.siteName,
+    required this.partyId,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -63,16 +77,24 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  late final List<Widget> _pages;
 
-  final List<Widget> _pages = [
-    const AlertsPage(), // Only tab
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      AlertsPage(
+        partyId: widget.partyId,
+        username: widget.username,
+        password: widget.password,
+        siteName: widget.siteName,
+      ),
+    ];
+  }
 
   void _onItemTapped(int index) {
     if (index >= 0 && index < _pages.length) {
-      setState(() {
-        _selectedIndex = index;
-      });
+      setState(() => _selectedIndex = index);
     }
   }
 

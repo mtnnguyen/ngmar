@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'graphql_service.dart';
 import 'package:flutter/gestures.dart';
+
+import 'graphql_service.dart';
+import 'alerts_page.dart';
 
 /// A page that allows users to sign in to the application.
 class LoginPage extends StatefulWidget {
@@ -17,6 +19,29 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  final GraphQLService _service = GraphQLService();
+
+  /// Robustly extract partyId from various possible API shapes.
+  int _extractPartyId(dynamic data) {
+    final candidates = [
+      data?['party_id'],
+      data?['partyId'],
+      data?['party']?['party_id'],
+      data?['party']?['partyId'],
+      data?['user']?['party_id'],
+      data?['user']?['partyId'],
+      data?['data']?['party_id'],
+      data?['data']?['partyId'],
+    ];
+    for (final v in candidates) {
+      if (v == null) continue;
+      if (v is int) return v;
+      final parsed = int.tryParse(v.toString());
+      if (parsed != null) return parsed;
+    }
+    throw StateError('partyId not found in sign-in response');
+  }
+
   /// Signs in the user with the provided username and password.
   Future<void> _signIn() async {
     setState(() {
@@ -24,24 +49,39 @@ class _LoginPageState extends State<LoginPage> {
       _errorMessage = null;
     });
 
-    // Validate input
-    try {
-      final service = GraphQLService();
-      final data = await service.signin(
-        _usernameController.text.trim(),
-        _passwordController.text.trim(),
-        'TEST_SITE',
-      );
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+    const siteName = 'TEST_SITE';
 
-      // Handle response
+    try {
+      final data = await _service.signin(username, password, siteName);
+
       if (data == null) {
         setState(() {
           _errorMessage = 'Something went wrong. Please try again.';
         });
-      } else if (data['error_code'] == null && data['party'] != null) {
-        final user = data['party'];
-        debugPrint('Signed in as: ${user['user_name']} (${user['email']})');
-        Navigator.pushReplacementNamed(context, '/menu');
+        return;
+      }
+
+      if (data['error_code'] == null && (data['party'] != null || true)) {
+        final partyId = _extractPartyId(data);
+        final user = data['party'] ?? data['user'] ?? {};
+
+        debugPrint('Signed in as: ${user['user_name'] ?? 'unknown'} (${user['email'] ?? 'no email'}) | partyId=$partyId');
+
+        if (!mounted) return;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AlertsPage(
+              partyId: partyId,
+              username: username,
+              password: password,
+              siteName: siteName,
+            ),
+          ),
+        );
       } else {
         setState(() {
           _errorMessage = "Login failed. Error code: ${data['error_code']}";
@@ -49,12 +89,14 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Something went wrong. Please try again.';
+        _errorMessage = 'Sign-in failed: $e';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -139,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ],
                         ),
-                    ),
+                      ),
                     ],
                   ),
                 ),
