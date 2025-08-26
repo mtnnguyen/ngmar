@@ -15,14 +15,9 @@ class GraphQLService {
   static const _productsUrl = 'https://glpt3ohk3zbyfdlla3fnj2r6ny.appsync-api.ca-central-1.amazonaws.com/graphql';
   static const _productsKey = 'da2-hykzcqryevbrjjwc56jbsjcg3m';
 
-  // --- Auth token (set after signin) ---
   String? _authToken;
+  void setAuthToken(String token) => _authToken = token;
 
-  void setAuthToken(String token) {
-    _authToken = token;
-  }
-
-  // Core POST helper
   Future<Map<String, dynamic>> _post({
     required String url,
     required String apiKey,
@@ -34,7 +29,7 @@ class GraphQLService {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'x-api-key': apiKey,
-      if (_authToken != null) 'authorization': 'Bearer $_authToken',
+      if (_authToken != null && url == _productsUrl) 'authorization': 'Bearer $_authToken',
       if (extraHeaders != null) ...extraHeaders,
     };
 
@@ -50,32 +45,34 @@ class GraphQLService {
     try {
       body = jsonDecode(resp.body) as Map<String, dynamic>;
     } catch (_) {
+      print('[GRAPHQL] ❌ Non-JSON response (code=${resp.statusCode}): ${resp.body}');
       throw Exception('Non-JSON response from $url (HTTP ${resp.statusCode})');
     }
 
-    print(body);
+    print('[GRAPHQL] ✅ Raw response from $url:');
+    print(const JsonEncoder.withIndent('  ').convert(body));
 
     if (resp.statusCode != 200) {
+      print('[GRAPHQL] ❌ HTTP ${resp.statusCode}');
       throw Exception('HTTP ${resp.statusCode} from $url: ${resp.body}');
     }
     if (body['errors'] != null) {
+      print('[GRAPHQL] ⚠️ Errors found: ${jsonEncode(body['errors'])}');
       throw Exception(jsonEncode(body['errors']));
     }
 
     final data = body['data'];
     if (data is! Map<String, dynamic>) {
+      print('[GRAPHQL] ❌ Missing or invalid "data" field');
       throw Exception('Missing "data" in GraphQL response from $url');
     }
     return data;
   }
 
-  // ----------------- Public API calls -----------------
-
-  Future<Map<String, dynamic>?> signin(
-      String username, String password, String siteName) async {
+  Future<Map<String, dynamic>?> signin(String username, String password, String siteName) async {
     const query = r'''
-      mutation ($user_name: String!, $password: String!, $site_name: String!) {
-        signin(user_name: $user_name, password: $password, site_name: $site_name) {
+      mutation (\$user_name: String!, \$password: String!, \$site_name: String!) {
+        signin(user_name: \$user_name, password: \$password, site_name: \$site_name) {
           party { party_id user_name email }
           error_code
         }
@@ -96,16 +93,7 @@ class GraphQLService {
       );
 
       final result = data['signin'] as Map<String, dynamic>?;
-
-      // ✅ Store the auth token if it exists
-      if (result != null) {
-        if (result['token'] != null) {
-          setAuthToken(result['token']);
-          print('✅ Auth token saved: ${result['token']}');
-        } else {
-          print('⚠️ No token returned in signin response: $result');
-        }
-      }
+      print('[SIGNIN] ➕ Final parsed result: $result');
 
       return result;
     } catch (e) {
@@ -114,11 +102,10 @@ class GraphQLService {
     }
   }
 
-  Future<Map<String, dynamic>?> signup(
-      Map<String, dynamic> party, String siteName) async {
+  Future<Map<String, dynamic>?> signup(Map<String, dynamic> party, String siteName) async {
     const query = r'''
-      mutation Signup($party: PartyInput!, $site_name: String!) {
-        signup(party: $party, site_name: $site_name) {
+      mutation Signup(\$party: PartyInput!, \$site_name: String!) {
+        signup(party: \$party, site_name: \$site_name) {
           party_id user_name first_name last_name email mobile error_code message
         }
       }
@@ -146,8 +133,8 @@ class GraphQLService {
     int recordsPerPage = 10,
   }) async {
     const query = r'''
-      query GetAlerts($site: String!, $from: AWSDateTime!, $to: AWSDateTime!, $limit: Int!) {
-        getAlerts(site_name: $site, from_date: $from, to_date: $to, records_per_page: $limit) {
+      query GetAlerts(\$site: String!, \$from: AWSDateTime!, \$to: AWSDateTime!, \$limit: Int!) {
+        getAlerts(site_name: \$site, from_date: \$from, to_date: \$to, records_per_page: \$limit) {
           alerts {
             alert_id
             timestamp_occurred
@@ -187,112 +174,18 @@ class GraphQLService {
     }
   }
 
-    Future<List<String>> getProductLicenses(
-      String siteName,
-      int partyId, {
-      String? username,
-      String? password,
-    }) async {
-      const queryA = r'''
-        query GetProductLicenses($site_name: String!, $party_id: Int!) {
-          getProductLicenses(site_name: $site_name, party_id: $party_id) {
-            product_code
-          }
-        }
-      ''';
-
-      const queryB = r'''
-        query GetProductLicenses($site_name: String!, $party_id: Int!) {
-          getProductLicenses(site_name: $site_name, party_id: $party_id) {
-            product_codes
-          }
-        }
-      ''';
-
-      print('==== GET PRODUCTS RESPONSE ====');
-      print('Calling getProductLicenses for: $username | $siteName | partyId=$partyId');
-
-      try {
-        final dataA = await _post(
-          url: _productsUrl,
-          apiKey: _productsKey,
-          query: queryA,
-          variables: {'site_name': siteName, 'party_id': partyId},
-        );
-        final rawA = dataA['getProductLicenses'];
-
-        if (rawA is List) {
-          return rawA
-              .map((item) => item is Map ? item['product_code'].toString() : item.toString())
-              .toList();
-        }
-
-        if (rawA is Map && rawA['product_codes'] is List) {
-          return (rawA['product_codes'] as List).map((e) => e.toString()).toList();
-        }
-
-        // Try fallback queryB
-        final dataB = await _post(
-          url: _productsUrl,
-          apiKey: _productsKey,
-          query: queryB,
-          variables: {'site_name': siteName, 'party_id': partyId},
-        );
-        final rawB = dataB['getProductLicenses'];
-        if (rawB is Map && rawB['product_codes'] is List) {
-          return (rawB['product_codes'] as List).map((e) => e.toString()).toList();
-        }
-
-        print('[getProductLicenses] Unexpected shape: $rawA / $rawB');
-        return <String>[];
-      } catch (e) {
-        print('[getProductLicenses] $e');
-        return <String>[];
-      }
-    }
-
-/*
-  /// Temporarily mock product codes to unblock development.
-  Future<List<String>> getProductLicenses(
-    String siteName,
-    int partyId, {
-    String? username,
-    String? password,
-  }) async {
-    print('==== MOCK GET PRODUCTS RESPONSE ====');
-    print('Returning mocked product codes for partyId=$partyId');
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // Mocked product codes
-    return [
-      'IND_SUR',
-      'OUT_SUR',
-      'TIM_TRA',
-      'PHA_GOV',
-    ];
-  }
-*/
-/*
-  /// Get product list — tries shape A first, then falls back to shape B if needed.
-  Future<List<String>> getProductLicenses(
-    String siteName,
-    int partyId, {
-    String? username,
-    String? password,
-  }) async {
+  Future<List<String>> getProductLicenses(String siteName, int partyId, {String? username, String? password}) async {
     const queryA = r'''
-      query GetProductLicenses($site_name: String!, $party_id: Int!) {
-        getProductLicenses(site_name: $site_name, party_id: $party_id) {
+      query GetProductLicenses(\$site_name: String!, \$party_id: Int!) {
+        getProductLicenses(site_name: \$site_name, party_id: \$party_id) {
           product_code
         }
       }
     ''';
 
     const queryB = r'''
-      query GetProductLicenses($site_name: String!, $party_id: Int!) {
-        getProductLicenses(site_name: $site_name, party_id: $party_id) {
+      query GetProductLicenses(\$site_name: String!, \$party_id: Int!) {
+        getProductLicenses(site_name: \$site_name, party_id: \$party_id) {
           product_codes
         }
       }
@@ -308,19 +201,24 @@ class GraphQLService {
         query: queryA,
         variables: {'site_name': siteName, 'party_id': partyId},
       );
+
       final rawA = dataA['getProductLicenses'];
+      print('[getProductLicenses A] Raw: $rawA');
 
       if (rawA is List) {
-        return rawA
+        final list = rawA
             .map((item) => item is Map ? item['product_code'].toString() : item.toString())
             .toList();
+        print('[getProductLicenses A] Parsed list: $list');
+        return list;
       }
 
       if (rawA is Map && rawA['product_codes'] is List) {
-        return (rawA['product_codes'] as List).map((e) => e.toString()).toList();
+        final list = (rawA['product_codes'] as List).map((e) => e.toString()).toList();
+        print('[getProductLicenses A] Parsed map list: $list');
+        return list;
       }
 
-      // Try fallback queryB
       final dataB = await _post(
         url: _productsUrl,
         apiKey: _productsKey,
@@ -328,18 +226,21 @@ class GraphQLService {
         variables: {'site_name': siteName, 'party_id': partyId},
       );
       final rawB = dataB['getProductLicenses'];
+      print('[getProductLicenses B] Raw: $rawB');
+
       if (rawB is Map && rawB['product_codes'] is List) {
-        return (rawB['product_codes'] as List).map((e) => e.toString()).toList();
+        final list = (rawB['product_codes'] as List).map((e) => e.toString()).toList();
+        print('[getProductLicenses B] Parsed map list: $list');
+        return list;
       }
 
-      print('[getProductLicenses] Unexpected shape: $rawA / $rawB');
+      print('[getProductLicenses] ❌ Unexpected shape: $rawA / $rawB');
       return <String>[];
     } catch (e) {
       print('[getProductLicenses] $e');
       return <String>[];
     }
   }
-*/
 
   Future<Map<String, dynamic>?> getProductStatus({
     required String siteName,
@@ -347,8 +248,8 @@ class GraphQLService {
     required String productCode,
   }) async {
     const query = r'''
-      query GetProductStatus($site_name: String!, $party_id: Int!, $product_code: String!) {
-        getProductStatus(site_name: $site_name, party_id: $party_id, product_code: $product_code) {
+      query GetProductStatus(\$site_name: String!, \$party_id: Int!, \$product_code: String!) {
+        getProductStatus(site_name: \$site_name, party_id: \$party_id, product_code: \$product_code) {
           product_status_flag
           statuses {
             product_status_name
@@ -358,6 +259,7 @@ class GraphQLService {
       }
     ''';
 
+    print('==== GET PRODUCT STATUS RESPONSE ====');
     try {
       final data = await _post(
         url: _productsUrl,
@@ -369,6 +271,7 @@ class GraphQLService {
           'product_code': productCode,
         },
       );
+      print('[getProductStatus] Parsed: ${data['getProductStatus']}');
       return data['getProductStatus'] as Map<String, dynamic>?;
     } catch (e) {
       print('[getProductStatus] $e');
