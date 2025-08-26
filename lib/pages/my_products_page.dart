@@ -6,7 +6,7 @@ import 'product_status_page.dart';
 const darkBackground = Color(0xFF121212);
 
 // image root that matches your tree in the screenshot
-const _assetRoot = 'lib/images';
+const _assetRoot = 'assets/images';
 
 const productMetadata = {
   'IND_SUR': {'name': 'Indoor Surveillance', 'icon': Icons.sensor_door},

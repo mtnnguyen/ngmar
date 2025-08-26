@@ -21,4 +21,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - lib/images/
+    - assets/images/logo.png
+    - assets/images/products/IND_SUR/
+    - assets/images/products/OUT_SUR/
+    - assets/images/products/PHA_GOV/
+    - assets/images/products/TIM_TRA/

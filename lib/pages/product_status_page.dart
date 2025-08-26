@@ -5,7 +5,7 @@ import 'graphql_service.dart';
 const darkBackground = Color(0xFF121212);
 
 // Matches your folder tree: lib/images/products/...
-const _assetRoot = 'lib/images';
+const _assetRoot = 'assets/images';
 
 class ProductStatusPage extends StatefulWidget {
   final String productCode;   // e.g., IND_SUR, OUT_SUR, TIM_TRA, PHA_GOV
