@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle; // for optional existence check
 import 'graphql_service.dart';
 
 const darkBackground = Color(0xFF121212);
 
-// If your images are under assets/images/...
+// Matches your folder tree: lib/images/products/...
 const _assetRoot = 'lib/images';
 
 class ProductStatusPage extends StatefulWidget {
@@ -29,7 +30,7 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
   String? _error;
 
   // Response
-  int? _productStatusFlag; // 0 green, 1 amber/yellow, 2 red
+  int? _productStatusFlag; // 0 green, 1 yellow, 2 red
   List<Map<String, dynamic>> _statuses = [];
 
   @override
@@ -62,7 +63,9 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
         return;
       }
 
-      final flag = resp['product_status_flag'];
+      final rawFlag = resp['product_status_flag'];
+      final resolvedFlag = rawFlag is int ? rawFlag : int.tryParse('${rawFlag}');
+
       final statuses = (resp['statuses'] as List?)
               ?.cast<Map>()
               .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
@@ -70,10 +73,26 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
           <Map<String, dynamic>>[];
 
       setState(() {
-        _productStatusFlag = flag is int ? flag : int.tryParse(flag?.toString() ?? '');
+        _productStatusFlag = resolvedFlag;
         _statuses = statuses.cast<Map<String, dynamic>>();
         _loading = false;
       });
+
+      // Optional: prove the asset exists (helps when debugging)
+      final testPath = _assetFor(widget.productCode, resolvedFlag);
+      try {
+        await rootBundle.load(testPath);
+        debugPrint('[ProductStatusPage] Asset found: $testPath');
+      } catch (e) {
+        debugPrint('[ProductStatusPage] Asset NOT found: $testPath -> $e');
+        final alt = testPath.replaceFirst('/yellow_', '/amber_');
+        try {
+          await rootBundle.load(alt);
+          debugPrint('[ProductStatusPage] Alt asset found: $alt');
+        } catch (e2) {
+          debugPrint('[ProductStatusPage] Alt asset NOT found: $alt -> $e2');
+        }
+      }
     } catch (e) {
       setState(() {
         _error = 'Failed to load product status. $e';
@@ -86,7 +105,7 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
   String _colorFor(int? flag) {
     switch (flag) {
       case 1:
-        return 'yellow'; // your filenames use 'yellow' not 'amber'
+        return 'yellow'; // you named these yellow_*.png
       case 2:
         return 'red';
       case 0:
@@ -107,23 +126,21 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
   }
 
   // Full asset path that matches your structure:
-  // assets/images/products/IND_SUR/green_ind.png, yellow_out.png, etc.
+  // lib/images/products/IND_SUR/green_ind.png, yellow_out.png, etc.
   String _assetFor(String productCode, int? flag) {
     final color = _colorFor(flag);
     final short = _shortFor(productCode);
     return '$_assetRoot/products/$productCode/${color}_$short.png';
   }
 
-  // --- NEW: derive the dot color/label from the actual image filename ---
+  // Derive dot color/label from the image filename (keeps UI in sync with logo)
   (Color color, String label) _colorLabelFromAssetPath(String assetPath) {
-    // Grab file name (e.g., "green_ind.png") then the color prefix ("green")
     final file = assetPath.split('/').last.toLowerCase();
     final prefix = file.split('_').first; // green / yellow / red / amber / etc.
-
     switch (prefix) {
       case 'green':
         return (Colors.green, 'GREEN');
-      case 'yellow': // if you ever switch to 'amber_*', add a case for 'amber' too
+      case 'yellow':
       case 'amber':
         return (Colors.orange, 'YELLOW');
       case 'red':
@@ -137,6 +154,7 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
   Widget build(BuildContext context) {
     // Build the asset path once, then use its prefix to color the dot/label
     final assetPath = _assetFor(widget.productCode, _productStatusFlag);
+    final altAssetPath = assetPath.replaceFirst('/yellow_', '/amber_'); // optional alt
     final (dotColor, dotLabel) = _colorLabelFromAssetPath(assetPath);
 
     return Scaffold(
@@ -164,7 +182,11 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
             Text(
               widget.productTitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -176,8 +198,15 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
                   assetPath,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) {
-                    // fallback to a dot with the same derived color
-                    return Icon(Icons.circle, size: 120, color: dotColor);
+                    // Try amber_* if yellow_* is missing
+                    return Image.asset(
+                      altAssetPath,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) {
+                        // Fallback to a big colored dot
+                        return Icon(Icons.circle, size: 120, color: dotColor);
+                      },
+                    );
                   },
                 ),
               ),
@@ -185,30 +214,47 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
 
             const SizedBox(height: 12),
 
-            // Dot + label whose color is derived from the image name
+            // Dot + label derived from the image name
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.circle, size: 12, color: dotColor),
                 const SizedBox(width: 8),
-                Text(dotLabel, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                Text(
+                  dotLabel,
+                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
 
             const SizedBox(height: 24),
 
             if (_loading)
-              const Center(child: Padding(padding: EdgeInsets.only(top: 24), child: CircularProgressIndicator()))
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 24),
+                  child: CircularProgressIndicator(),
+                ),
+              )
             else if (_error != null)
               Column(
                 children: [
-                  Text(_error!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+                  Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.redAccent),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 12),
                   OutlinedButton(onPressed: _fetchStatus, child: const Text('Retry')),
                 ],
               )
             else if (_statuses.isEmpty)
-              const Center(child: Text('No statuses available.', style: TextStyle(color: Colors.white70)))
+              const Center(
+                child: Text(
+                  'No statuses available.',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              )
             else
               ..._statuses.map((item) {
                 final name = item['product_status_name']?.toString() ?? 'Unknown';
@@ -220,7 +266,10 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    title: Text('$name : $value', style: const TextStyle(color: Colors.white, fontSize: 16)),
+                    title: Text(
+                      '$name : $value',
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
                   ),
                 );
               }),

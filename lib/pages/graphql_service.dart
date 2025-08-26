@@ -181,7 +181,7 @@ Future<List<String>> getProductLicenses(String siteName, int partyId, {String? p
   //  - party_id=9,  user_name=userid9,  password=123456  -> mock IND_SUR + TIM_TRA
   //  - party_id=18, user_name=userid98, password=123456  -> mock OUT_SUR
   final codesByUser = <int, List<String>>{
-    19: ['IND_SUR', 'OUT_SUR', 'TIM_TRA'], // userid57
+    19: ['IND_SUR', 'OUT_SUR', 'TIM_TRA', 'PHA_GOV'], // userid57
     9:  ['IND_SUR', 'TIM_TRA'],            // userid9
     18: ['OUT_SUR'],                       // userid98
   };
