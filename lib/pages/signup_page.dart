@@ -41,7 +41,7 @@ class _SignUpPageState extends State<SignUpPage> {
             children: [
               Center(
                 child: Image.asset(
-                  'lib/images/logo.jpeg',
+                  'lib/images/logo.png',
                   height: 100,
                 ),
               ),

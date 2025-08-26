@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'pages/graphql_service.dart';
 import 'pages/alerts_page.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';

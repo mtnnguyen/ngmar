@@ -5,7 +5,6 @@ import 'product_status_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
-// Metadata for product mappings
 const productMetadata = {
   'IND_SUR': {
     'name': 'Indoor Surveillance',
@@ -69,17 +68,15 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
 
     final graphqlService = GraphQLService();
 
-    print('🔄 fetchProducts START for user=${widget.username}, partyId=${widget.partyId}, site=${widget.siteName}');
+    print('fetchProducts START for user=${widget.username}, partyId=${widget.partyId}, site=${widget.siteName}');
 
     try {
       final licensedCodes = await graphqlService.getProductLicenses(
         widget.siteName,
         widget.partyId,
-        username: widget.username,
-        password: widget.password,
       );
 
-      print('📦 Licensed product codes: $licensedCodes');
+      print('Licensed product codes: $licensedCodes');
 
       if (licensedCodes.isEmpty) {
         throw Exception("No product licenses found.");
@@ -87,11 +84,11 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
 
       for (final code in licensedCodes) {
         if (!productMetadata.containsKey(code)) {
-          print('⚠️ Unknown product code skipped: $code');
+          print('Unknown product code skipped: $code');
           continue;
         }
 
-        print('🔍 Fetching status for $code...');
+        print('Fetching status for $code...');
 
         final status = await graphqlService.getProductStatus(
           siteName: widget.siteName,
@@ -99,7 +96,7 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
           productCode: code,
         );
 
-        print('✅ Status response for $code: $status');
+        print('Status response for $code: $status');
 
         if (status != null) {
           availableSections.add({
@@ -114,9 +111,9 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
         _loading = false;
       });
 
-      print('✅ Final availableSections: $availableSections');
+      print('Final availableSections: $availableSections');
     } catch (e) {
-      print('❌ Error in fetchProducts: $e');
+      print('Error in fetchProducts: $e');
       setState(() {
         _loading = false;
         _error = 'Failed to load products. Please try again later.';
@@ -160,7 +157,7 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
         ),
         trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 18),
         onTap: () async {
-          print('➡️ Navigating to status page for $code ($title)');
+          print('Navigating to status page for $code ($title)');
           await Navigator.push(
             context,
             MaterialPageRoute(
