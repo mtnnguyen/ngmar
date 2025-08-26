@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'product_status_page.dart';
 
-class IndoorSurveillancePage extends StatelessWidget {
+class EmployeeTimeTrackingPage extends StatelessWidget {
   final String siteName;
   final int partyId;
-  const IndoorSurveillancePage({super.key, required this.siteName, required this.partyId});
+  const EmployeeTimeTrackingPage({super.key, required this.siteName, required this.partyId});
 
   @override
   Widget build(BuildContext context) {
     return ProductStatusPage(
-      productCode: 'IND_SUR',
-      productTitle: 'Indoor Surveillance',
+      productCode: 'TIM_TRA',
+      productTitle: 'Employee Time Tracking',
       siteName: siteName,
       partyId: partyId,
     );
-    }
+  }
 }

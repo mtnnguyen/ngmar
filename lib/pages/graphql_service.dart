@@ -168,42 +168,69 @@ class GraphQLService {
     }
   }
 
-  Future<List<String>> getProductLicenses(String siteName, int partyId, {String? productCode}) async {
-    const query = r'''
-      query GetProductLicenses($site_name: String!, $party_id: Int!, $product_code: String) {
-        getProductLicenses(site_name: $site_name, party_id: $party_id, product_code: $product_code) {
-          product_code
-        }
+  // Replace your existing getProductLicenses(...) with this version.
+Future<List<String>> getProductLicenses(String siteName, int partyId, {String? productCode}) async {
+  // --- MOCK IMPLEMENTATION (TEMP) ---
+  // Simulates the API while GetProductLicenses is being fixed.
+  await Future.delayed(const Duration(milliseconds: 400)); // fake latency for realism
+
+  final site = siteName.toUpperCase();
+
+  // Test fixtures (from your boss):
+  //  - party_id=19, user_name=userid57, password=123456  -> mock 3 products (no PHA_GOV for now)
+  //  - party_id=9,  user_name=userid9,  password=123456  -> mock IND_SUR + TIM_TRA
+  //  - party_id=18, user_name=userid98, password=123456  -> mock OUT_SUR
+  final codesByUser = <int, List<String>>{
+    19: ['IND_SUR', 'OUT_SUR', 'TIM_TRA'], // userid57
+    9:  ['IND_SUR', 'TIM_TRA'],            // userid9
+    18: ['OUT_SUR'],                       // userid98
+  };
+
+  final allCodes = (site == 'TEST_SITE') ? (codesByUser[partyId] ?? <String>[]) : <String>[];
+
+  if (productCode != null) {
+    // Support server-side filter shape
+    return allCodes.where((c) => c == productCode).toList();
+  }
+  return allCodes;
+
+  /* ---------------- REAL IMPLEMENTATION (COMMENTED OUT) ----------------
+  const query = r'''
+    query GetProductLicenses($site_name: String!, $party_id: Int!, $product_code: String) {
+      getProductLicenses(site_name: $site_name, party_id: $party_id, product_code: $product_code) {
+        product_code
       }
-    ''';
+    }
+  ''';
 
-    print('[GraphQLService:getProductLicenses] Fetching product licenses for site=$siteName, partyId=$partyId, productCode=$productCode');
-    try {
-      final data = await _post(
-        url: _productLicensesUrl,
-        apiKey: _productLicensesKey,
-        query: query,
-        variables: {
-          'site_name': siteName.toUpperCase(),
-          'party_id': partyId,
-          if (productCode != null) 'product_code': productCode,
-        },
-      );
+  print('[GraphQLService:getProductLicenses] Fetching product licenses for site=$siteName, partyId=$partyId, productCode=$productCode');
+  try {
+    final data = await _post(
+      url: _productLicensesUrl,
+      apiKey: _productLicensesKey,
+      query: query,
+      variables: {
+        'site_name': siteName.toUpperCase(),
+        'party_id': partyId,
+        if (productCode != null) 'product_code': productCode,
+      },
+    );
 
-      final raw = data['getProductLicenses'];
-      if (raw is! List) {
-        print('[GraphQLService:getProductLicenses] Unexpected response shape: $raw');
-        return <String>[];
-      }
-
-      final list = raw.map((item) => item['product_code'].toString()).toList();
-      print('[GraphQLService:getProductLicenses] $list');
-      return list;
-    } catch (e) {
-      print('[GraphQLService:getProductLicenses] $e');
+    final raw = data['getProductLicenses'];
+    if (raw is! List) {
+      print('[GraphQLService:getProductLicenses] Unexpected response shape: $raw');
       return <String>[];
     }
+
+    final list = raw.map<String>((item) => item['product_code'].toString()).toList();
+    print('[GraphQLService:getProductLicenses] $list');
+    return list;
+  } catch (e) {
+    print('[GraphQLService:getProductLicenses] $e');
+    return <String>[];
   }
+  ---------------- END REAL IMPLEMENTATION ---------------- */
+}
 
   Future<Map<String, dynamic>?> getProductStatus({
     required String siteName,

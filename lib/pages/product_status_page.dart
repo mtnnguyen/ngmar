@@ -3,6 +3,9 @@ import 'graphql_service.dart';
 
 const darkBackground = Color(0xFF121212);
 
+// If your images are under assets/images/...
+const _assetRoot = 'lib/images';
+
 class ProductStatusPage extends StatefulWidget {
   final String productCode;   // e.g., IND_SUR, OUT_SUR, TIM_TRA, PHA_GOV
   final String productTitle;  // e.g., Indoor Surveillance
@@ -26,7 +29,7 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
   String? _error;
 
   // Response
-  int? _productStatusFlag; // 0 green, 1 amber, 2 red
+  int? _productStatusFlag; // 0 green, 1 amber/yellow, 2 red
   List<Map<String, dynamic>> _statuses = [];
 
   @override
@@ -39,6 +42,8 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
     setState(() {
       _loading = true;
       _error = null;
+      _statuses = [];
+      _productStatusFlag = null;
     });
 
     try {
@@ -58,11 +63,15 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
       }
 
       final flag = resp['product_status_flag'];
-      final statuses = (resp['statuses'] as List?)?.cast<Map<String, dynamic>>() ?? <Map<String, dynamic>>[];
+      final statuses = (resp['statuses'] as List?)
+              ?.cast<Map>()
+              .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
+              .toList() ??
+          <Map<String, dynamic>>[];
 
       setState(() {
         _productStatusFlag = flag is int ? flag : int.tryParse(flag?.toString() ?? '');
-        _statuses = statuses;
+        _statuses = statuses.cast<Map<String, dynamic>>();
         _loading = false;
       });
     } catch (e) {
@@ -73,47 +82,68 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
     }
   }
 
-  // Maps 0/1/2 -> color + label (GREEN/AMBER/RED)
-  (Color color, String label) _flagToColorAndLabel(int? flag) {
+  // Map 0/1/2 -> 'green' / 'yellow' / 'red' for your filenames
+  String _colorFor(int? flag) {
     switch (flag) {
-      case 0:
-        return (Colors.green, 'GREEN');
       case 1:
-        return (Colors.amber, 'AMBER');
+        return 'yellow'; // your filenames use 'yellow' not 'amber'
       case 2:
-        return (Colors.red, 'RED');
+        return 'red';
+      case 0:
       default:
-        return (Colors.grey, 'UNKNOWN');
+        return 'green';
     }
   }
 
-  Widget _buildFlagHeader() {
-    final (color, label) = _flagToColorAndLabel(_productStatusFlag);
+  // ProductCode -> short suffix used in your filenames
+  String _shortFor(String code) {
+    const map = {
+      'IND_SUR': 'ind',
+      'OUT_SUR': 'out',
+      'PHA_GOV': 'phar',
+      'TIM_TRA': 'tim',
+    };
+    return map[code] ?? code.toLowerCase();
+  }
 
-    // If you later get image assets, replace the CircleAvatar with Image.asset(...)
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 14,
-          backgroundColor: color,
-        ),
-        const SizedBox(width: 12),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
+  // Full asset path that matches your structure:
+  // assets/images/products/IND_SUR/green_ind.png, yellow_out.png, etc.
+  String _assetFor(String productCode, int? flag) {
+    final color = _colorFor(flag);
+    final short = _shortFor(productCode);
+    return '$_assetRoot/products/$productCode/${color}_$short.png';
+  }
+
+  // --- NEW: derive the dot color/label from the actual image filename ---
+  (Color color, String label) _colorLabelFromAssetPath(String assetPath) {
+    // Grab file name (e.g., "green_ind.png") then the color prefix ("green")
+    final file = assetPath.split('/').last.toLowerCase();
+    final prefix = file.split('_').first; // green / yellow / red / amber / etc.
+
+    switch (prefix) {
+      case 'green':
+        return (Colors.green, 'GREEN');
+      case 'yellow': // if you ever switch to 'amber_*', add a case for 'amber' too
+      case 'amber':
+        return (Colors.orange, 'YELLOW');
+      case 'red':
+        return (Colors.red, 'RED');
+      default:
+        return (Colors.white70, 'UNKNOWN');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Build the asset path once, then use its prefix to color the dot/label
+    final assetPath = _assetFor(widget.productCode, _productStatusFlag);
+    final (dotColor, dotLabel) = _colorLabelFromAssetPath(assetPath);
+
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
         backgroundColor: darkBackground,
         centerTitle: true,
-        // Boss asked: heading based on product_code — we show a friendly title and code.
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -125,55 +155,77 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
           ],
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _error != null
-                ? Center(
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.redAccent),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildFlagHeader(),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Statuses',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: _statuses.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  'No statuses available.',
-                                  style: TextStyle(color: Colors.white70),
-                                ),
-                              )
-                            : ListView.separated(
-                                itemCount: _statuses.length,
-                                separatorBuilder: (_, __) => const Divider(color: Colors.white12),
-                                itemBuilder: (context, index) {
-                                  final item = _statuses[index];
-                                  final name = item['product_status_name']?.toString() ?? 'Unknown';
-                                  final value = item['product_status_value']?.toString() ?? '';
-                                  return ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: Text(
-                                      '$name : $value',
-                                      style: const TextStyle(color: Colors.white),
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
+      body: RefreshIndicator(
+        onRefresh: _fetchStatus,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Product name heading (boss request)
+            Text(
+              widget.productTitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+
+            // Product-specific image based on flag (centered). Defaults to green if null.
+            Center(
+              child: SizedBox(
+                height: 140,
+                child: Image.asset(
+                  assetPath,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) {
+                    // fallback to a dot with the same derived color
+                    return Icon(Icons.circle, size: 120, color: dotColor);
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Dot + label whose color is derived from the image name
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.circle, size: 12, color: dotColor),
+                const SizedBox(width: 8),
+                Text(dotLabel, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            if (_loading)
+              const Center(child: Padding(padding: EdgeInsets.only(top: 24), child: CircularProgressIndicator()))
+            else if (_error != null)
+              Column(
+                children: [
+                  Text(_error!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  OutlinedButton(onPressed: _fetchStatus, child: const Text('Retry')),
+                ],
+              )
+            else if (_statuses.isEmpty)
+              const Center(child: Text('No statuses available.', style: TextStyle(color: Colors.white70)))
+            else
+              ..._statuses.map((item) {
+                final name = item['product_status_name']?.toString() ?? 'Unknown';
+                final value = item['product_status_value']?.toString() ?? '';
+                return Card(
+                  color: Colors.grey.shade900,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    title: Text('$name : $value', style: const TextStyle(color: Colors.white, fontSize: 16)),
                   ),
+                );
+              }),
+          ],
+        ),
       ),
     );
   }

@@ -5,23 +5,14 @@ import 'product_status_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
+// image root that matches your tree in the screenshot
+const _assetRoot = 'lib/images';
+
 const productMetadata = {
-  'IND_SUR': {
-    'name': 'Indoor Surveillance',
-    'icon': Icons.sensor_door,
-  },
-  'OUT_SUR': {
-    'name': 'Outdoor Surveillance',
-    'icon': Icons.videocam_outlined,
-  },
-  'TIM_TRA': {
-    'name': 'Employee Time Tracking',
-    'icon': Icons.access_time,
-  },
-  'PHA_GOV': {
-    'name': 'Pharmacy Governance',
-    'icon': Icons.local_pharmacy,
-  },
+  'IND_SUR': {'name': 'Indoor Surveillance', 'icon': Icons.sensor_door},
+  'OUT_SUR': {'name': 'Outdoor Surveillance', 'icon': Icons.videocam_outlined},
+  'TIM_TRA': {'name': 'Employee Time Tracking', 'icon': Icons.access_time},
+  'PHA_GOV': {'name': 'Pharmacy Governance', 'icon': Icons.local_pharmacy},
 };
 
 class MyProductsPage extends StatefulWidget {
@@ -42,7 +33,8 @@ class MyProductsPage extends StatefulWidget {
   State<MyProductsPage> createState() => _MyProductsPageState();
 }
 
-class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProviderStateMixin {
+class _MyProductsPageState extends State<MyProductsPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   List<Map<String, dynamic>> availableSections = [];
 
@@ -52,11 +44,61 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 3))
+          ..repeat();
     fetchProducts();
+  }
+
+  // --- helpers to mirror ProductStatusPage ---
+
+  // 0/1/2 -> 'green' / 'yellow' / 'red' (filenames)
+  String _colorFor(int? flag) {
+    switch (flag) {
+      case 1:
+        return 'yellow';
+      case 2:
+        return 'red';
+      case 0:
+      default:
+        return 'green';
+    }
+  }
+
+  // ProductCode -> short suffix used in your filenames
+  String _shortFor(String code) {
+    const map = {
+      'IND_SUR': 'ind',
+      'OUT_SUR': 'out',
+      'PHA_GOV': 'phar',
+      'TIM_TRA': 'tim',
+    };
+    return map[code] ?? code.toLowerCase();
+  }
+
+  // Build the asset path we would show on the status page
+  String _assetFor(String productCode, int? flag) {
+    final color = _colorFor(flag);
+    final short = _shortFor(productCode);
+    return '$_assetRoot/products/$productCode/${color}_$short.png';
+    // e.g. lib/images/products/IND_SUR/green_ind.png
+  }
+
+  // Derive the dot color from the actual filename prefix
+  Color _dotColorFromAssetPath(String assetPath) {
+    final file = assetPath.split('/').last.toLowerCase();
+    final prefix = file.split('_').first; // green / yellow / red
+    switch (prefix) {
+      case 'green':
+        return Colors.green;
+      case 'yellow':
+      case 'amber':
+        return Colors.orange;
+      case 'red':
+        return Colors.red;
+      default:
+        return Colors.white70;
+    }
   }
 
   Future<void> fetchProducts() async {
@@ -68,52 +110,56 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
 
     final graphqlService = GraphQLService();
 
-    print('fetchProducts START for user=${widget.username}, partyId=${widget.partyId}, site=${widget.siteName}');
-
     try {
-      final licensedCodes = await graphqlService.getProductLicenses(
-        widget.siteName,
-        widget.partyId,
-      );
+      final licensedCodes =
+          await graphqlService.getProductLicenses(widget.siteName, widget.partyId);
 
-      print('Licensed product codes: $licensedCodes');
+      if (!mounted) return;
 
       if (licensedCodes.isEmpty) {
-        throw Exception("No product licenses found.");
+        throw Exception('No product licenses found.');
       }
 
-      for (final code in licensedCodes) {
-        if (!productMetadata.containsKey(code)) {
-          print('Unknown product code skipped: $code');
-          continue;
-        }
+      // keep only known codes
+      final codes =
+          licensedCodes.where((c) => productMetadata.containsKey(c)).toList();
 
-        print('Fetching status for $code...');
-
+      // fetch each product's status in parallel
+      final results = await Future.wait(codes.map((code) async {
         final status = await graphqlService.getProductStatus(
           siteName: widget.siteName,
           partyId: widget.partyId,
           productCode: code,
         );
+        return {'code': code, 'status': status};
+      }));
 
-        print('Status response for $code: $status');
+      if (!mounted) return;
 
-        if (status != null) {
-          availableSections.add({
-            'title': productMetadata[code]!['name'],
-            'icon': productMetadata[code]!['icon'],
-            'code': code,
-          });
-        }
+      final sections = <Map<String, dynamic>>[];
+      for (final r in results) {
+        final code = r['code'] as String;
+        final status = r['status'] as Map<String, dynamic>?; // null => skip
+        if (status == null) continue;
+
+        final meta = productMetadata[code]!;
+        final rawFlag = status['product_status_flag'];
+        final flag = rawFlag is int ? rawFlag : int.tryParse('$rawFlag') ?? 0;
+
+        sections.add({
+          'title': meta['name'],
+          'icon': meta['icon'],
+          'code': code,
+          'flag': flag, // keep for building image path
+        });
       }
 
       setState(() {
+        availableSections = sections;
         _loading = false;
       });
-
-      print('Final availableSections: $availableSections');
     } catch (e) {
-      print('Error in fetchProducts: $e');
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = 'Failed to load products. Please try again later.';
@@ -133,16 +179,16 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
       width: double.infinity,
       child: AnimatedBuilder(
         animation: _controller,
-        builder: (context, _) {
-          return CustomPaint(
-            painter: PharmacyScenePainter(animationValue: _controller.value),
-          );
-        },
+        builder: (context, _) =>
+            CustomPaint(painter: PharmacyScenePainter(animationValue: _controller.value)),
       ),
     );
   }
 
-  Widget _buildSectionTile(String title, IconData icon, String code) {
+  Widget _buildSectionTile(String title, IconData icon, String code, {int? flag}) {
+    final assetPath = _assetFor(code, flag);
+    final dotColor = _dotColorFromAssetPath(assetPath);
+
     return Card(
       color: Colors.grey.shade900,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -151,13 +197,17 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         leading: Icon(icon, color: Colors.lightBlueAccent, size: 32),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 18, color: Colors.white),
+        title: Text(title, style: const TextStyle(fontSize: 18, color: Colors.white)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Dot color derived from the SAME image name used on the status page
+            Icon(Icons.circle, color: dotColor, size: 12),
+            const SizedBox(width: 10),
+            const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 18),
+          ],
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 18),
         onTap: () async {
-          print('Navigating to status page for $code ($title)');
           await Navigator.push(
             context,
             MaterialPageRoute(
@@ -199,11 +249,17 @@ class _MyProductsPageState extends State<MyProductsPage> with SingleTickerProvid
                   style: const TextStyle(color: Colors.redAccent, fontSize: 16),
                 ),
               )
+            else if (availableSections.isEmpty)
+              const Center(
+                child: Text('No products available.',
+                    style: TextStyle(color: Colors.white70)),
+              )
             else
-              ...availableSections.map((section) => _buildSectionTile(
-                    section['title'],
-                    section['icon'],
-                    section['code'],
+              ...availableSections.map((s) => _buildSectionTile(
+                    s['title'] as String,
+                    s['icon'] as IconData,
+                    s['code'] as String,
+                    flag: s['flag'] as int?,
                   )),
           ],
         ),
