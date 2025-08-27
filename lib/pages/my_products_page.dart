@@ -5,7 +5,7 @@ import 'product_status_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
-// image root that matches your tree in the screenshot
+// image root that matches your tree
 const _assetRoot = 'assets/images';
 
 const productMetadata = {
@@ -81,7 +81,7 @@ class _MyProductsPageState extends State<MyProductsPage>
     final color = _colorFor(flag);
     final short = _shortFor(productCode);
     return '$_assetRoot/products/$productCode/${color}_$short.png';
-    // e.g. lib/images/products/IND_SUR/green_ind.png
+    // e.g. assets/images/products/IND_SUR/green_ind.png
   }
 
   // Derive the dot color from the actual filename prefix
@@ -111,18 +111,21 @@ class _MyProductsPageState extends State<MyProductsPage>
     final graphqlService = GraphQLService();
 
     try {
-      final licensedCodes =
-          await graphqlService.getProductLicenses(widget.siteName, widget.partyId);
+      // UPDATED: use getProducts instead of getProductLicenses
+      final productCodes = await graphqlService.getProducts(
+        siteName: widget.siteName,
+        partyId: widget.partyId,
+      );
 
       if (!mounted) return;
 
-      if (licensedCodes.isEmpty) {
-        throw Exception('No product licenses found.');
+      if (productCodes.isEmpty) {
+        throw Exception('No products found.');
       }
 
       // keep only known codes
       final codes =
-          licensedCodes.where((c) => productMetadata.containsKey(c)).toList();
+          productCodes.where((c) => productMetadata.containsKey(c)).toList();
 
       // fetch each product's status in parallel
       final results = await Future.wait(codes.map((code) async {

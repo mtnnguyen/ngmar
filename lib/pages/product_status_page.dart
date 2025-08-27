@@ -4,7 +4,7 @@ import 'graphql_service.dart';
 
 const darkBackground = Color(0xFF121212);
 
-// Matches your folder tree: lib/images/products/...
+// Matches your folder tree: assets/images/products/...
 const _assetRoot = 'assets/images';
 
 class ProductStatusPage extends StatefulWidget {
@@ -64,7 +64,8 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
       }
 
       final rawFlag = resp['product_status_flag'];
-      final resolvedFlag = rawFlag is int ? rawFlag : int.tryParse('${rawFlag}');
+      // default to 0 (green) if missing
+      final resolvedFlag = rawFlag is int ? rawFlag : (int.tryParse('$rawFlag') ?? 0);
 
       final statuses = (resp['statuses'] as List?)
               ?.cast<Map>()
@@ -105,7 +106,7 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
   String _colorFor(int? flag) {
     switch (flag) {
       case 1:
-        return 'yellow'; // you named these yellow_*.png
+        return 'yellow'; // your images use yellow_*.png (amber fallback supported)
       case 2:
         return 'red';
       case 0:
@@ -126,7 +127,7 @@ class _ProductStatusPageState extends State<ProductStatusPage> {
   }
 
   // Full asset path that matches your structure:
-  // lib/images/products/IND_SUR/green_ind.png, yellow_out.png, etc.
+  // assets/images/products/IND_SUR/green_ind.png, yellow_out.png, etc.
   String _assetFor(String productCode, int? flag) {
     final color = _colorFor(flag);
     final short = _shortFor(productCode);

@@ -12,8 +12,9 @@ class GraphQLService {
   static const _alertsUrl   = 'https://tb5xwefsybcitbefa3wksxrazm.appsync-api.ca-central-1.amazonaws.com/graphql';
   static const _alertsKey   = 'da2-7lmmoz642fb3bakwqc4e5k6ytq';
 
-  static const _productLicensesUrl = 'https://glpt3ohk3zbyfdlla3fnj2r6ny.appsync-api.ca-central-1.amazonaws.com/graphql';
-  static const _productLicensesKey = 'da2-hykzcqryevbrjjwc56jbsjcg3m';
+  // Renamed backend: use the same endpoint/key but call getProducts
+  static const _productsUrl = 'https://glpt3ohk3zbyfdlla3fnj2r6ny.appsync-api.ca-central-1.amazonaws.com/graphql';
+  static const _productsKey = 'da2-hykzcqryevbrjjwc56jbsjcg3m';
 
   static const _productStatusUrl   = 'https://jnnyyvz3prfudoenrzuudwdtea.appsync-api.ca-central-1.amazonaws.com/graphql';
   static const _productStatusKey   = 'da2-7tsjq7tch5e2xojhguyhc6pwm4';
@@ -36,7 +37,7 @@ class GraphQLService {
       if (extraHeaders != null) ...extraHeaders,
     };
 
-    print('[GraphQLService:_post] Sending POST to $url with variables: ${jsonEncode(variables)}');
+    print('[GraphQLService:_post] POST $url vars=${jsonEncode(variables)}');
 
     final resp = await http
         .post(
@@ -50,12 +51,11 @@ class GraphQLService {
     try {
       body = jsonDecode(resp.body) as Map<String, dynamic>;
     } catch (_) {
-      print('[GraphQLService:_post] Non-JSON response (code=${resp.statusCode}): ${resp.body}');
+      print('[GraphQLService:_post] Non-JSON (code=${resp.statusCode}): ${resp.body}');
       throw Exception('Non-JSON response from $url (HTTP ${resp.statusCode})');
     }
 
-    print('[GraphQLService:_post] Raw response from $url:');
-    print(const JsonEncoder.withIndent('  ').convert(body));
+    print('[GraphQLService:_post] Raw response from $url:\n${const JsonEncoder.withIndent('  ').convert(body)}');
 
     if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}: ${resp.body}');
     if (body['errors'] != null) throw Exception(jsonEncode(body['errors']));
@@ -75,7 +75,7 @@ class GraphQLService {
       }
     ''';
 
-    print('[GraphQLService:signin] Signing in with user=$username and site=$siteName');
+    print('[GraphQLService:signin] user=$username site=$siteName');
     try {
       final data = await _post(
         url: _signinUrl,
@@ -103,7 +103,7 @@ class GraphQLService {
       }
     ''';
 
-    print('[GraphQLService:signup] Signing up with party=$party');
+    print('[GraphQLService:signup] party=$party');
     try {
       final data = await _post(
         url: _signupUrl,
@@ -148,7 +148,7 @@ class GraphQLService {
       }
     ''';
 
-    print('[GraphQLService:getAlerts] Fetching alerts for site=$siteName');
+    print('[GraphQLService:getAlerts] site=$siteName');
     try {
       final data = await _post(
         url: _alertsUrl,
@@ -168,69 +168,63 @@ class GraphQLService {
     }
   }
 
-  // Replace your existing getProductLicenses(...) with this version.
-Future<List<String>> getProductLicenses(String siteName, int partyId, {String? productCode}) async {
-  // --- MOCK IMPLEMENTATION (TEMP) ---
-  // Simulates the API while GetProductLicenses is being fixed.
-  await Future.delayed(const Duration(milliseconds: 400)); // fake latency for realism
+  // =========================
+  // PRODUCTS (renamed API)
+  // =========================
 
-  final site = siteName.toUpperCase();
-
-  // Test fixtures (from your boss):
-  //  - party_id=19, user_name=userid57, password=123456  -> mock 3 products (no PHA_GOV for now)
-  //  - party_id=9,  user_name=userid9,  password=123456  -> mock IND_SUR + TIM_TRA
-  //  - party_id=18, user_name=userid98, password=123456  -> mock OUT_SUR
-  final codesByUser = <int, List<String>>{
-    19: ['IND_SUR', 'OUT_SUR', 'TIM_TRA', 'PHA_GOV'], // userid57
-    9:  ['IND_SUR', 'TIM_TRA'],            // userid9
-    18: ['OUT_SUR'],                       // userid98
-  };
-
-  final allCodes = (site == 'TEST_SITE') ? (codesByUser[partyId] ?? <String>[]) : <String>[];
-
-  if (productCode != null) {
-    // Support server-side filter shape
-    return allCodes.where((c) => c == productCode).toList();
-  }
-  return allCodes;
-
-  /* ---------------- REAL IMPLEMENTATION (COMMENTED OUT) ----------------
-  const query = r'''
-    query GetProductLicenses($site_name: String!, $party_id: Int!, $product_code: String) {
-      getProductLicenses(site_name: $site_name, party_id: $party_id, product_code: $product_code) {
-        product_code
+  /// New canonical method: fetch product codes for a user on a site.
+  Future<List<String>> getProducts({
+    required String siteName,
+    required int partyId,
+  }) async {
+    const query = r'''
+      query GetProducts($site_name: String!, $party_id: Int!) {
+        getProducts(site_name: $site_name, party_id: $party_id) {
+          product_code
+        }
       }
-    }
-  ''';
+    ''';
 
-  print('[GraphQLService:getProductLicenses] Fetching product licenses for site=$siteName, partyId=$partyId, productCode=$productCode');
-  try {
-    final data = await _post(
-      url: _productLicensesUrl,
-      apiKey: _productLicensesKey,
-      query: query,
-      variables: {
-        'site_name': siteName.toUpperCase(),
-        'party_id': partyId,
-        if (productCode != null) 'product_code': productCode,
-      },
-    );
+    print('[GraphQLService:getProducts] site=$siteName partyId=$partyId');
+    try {
+      final data = await _post(
+        url: _productsUrl,
+        apiKey: _productsKey,
+        query: query,
+        variables: {
+          'site_name': siteName.toUpperCase(),
+          'party_id': partyId,
+        },
+      );
 
-    final raw = data['getProductLicenses'];
-    if (raw is! List) {
-      print('[GraphQLService:getProductLicenses] Unexpected response shape: $raw');
+      final raw = data['getProducts'];
+      if (raw is! List) {
+        print('[GraphQLService:getProducts] Unexpected shape: $raw');
+        return <String>[];
+      }
+      final list = raw
+          .map((e) => (e as Map<String, dynamic>)['product_code']?.toString())
+          .whereType<String>()
+          .toList();
+      print('[GraphQLService:getProducts] $list');
+      return list;
+    } catch (e) {
+      print('[GraphQLService:getProducts] $e');
       return <String>[];
     }
-
-    final list = raw.map<String>((item) => item['product_code'].toString()).toList();
-    print('[GraphQLService:getProductLicenses] $list');
-    return list;
-  } catch (e) {
-    print('[GraphQLService:getProductLicenses] $e');
-    return <String>[];
   }
-  ---------------- END REAL IMPLEMENTATION ---------------- */
-}
+
+  /// Backward-compat wrapper. Remove once all callers are migrated.
+  @Deprecated('Use getProducts(siteName: ..., partyId: ...) instead.')
+  Future<List<String>> getProductLicenses(String siteName, int partyId, {String? productCode}) {
+    // Backend no longer supports filtering by product_code in this call.
+    // We ignore productCode and delegate to getProducts.
+    return getProducts(siteName: siteName, partyId: partyId);
+  }
+
+  // =========================
+  // PRODUCT STATUS
+  // =========================
 
   Future<Map<String, dynamic>?> getProductStatus({
     required String siteName,
@@ -248,7 +242,7 @@ Future<List<String>> getProductLicenses(String siteName, int partyId, {String? p
       }
     ''';
 
-    print('[GraphQLService:getProductStatus] Fetching product status for code=$productCode');
+    print('[GraphQLService:getProductStatus] code=$productCode');
     try {
       final data = await _post(
         url: _productStatusUrl,
