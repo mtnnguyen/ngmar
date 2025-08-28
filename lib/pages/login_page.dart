@@ -189,10 +189,10 @@ class _LoginPageState extends State<LoginPage> {
             ),
 
             // Footer section
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
               child: Column(
-                children: const [
+                children: [
                   Divider(color: Colors.white30),
                   SizedBox(height: 8),
                   Row(

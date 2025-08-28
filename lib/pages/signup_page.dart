@@ -140,7 +140,7 @@ class _SignUpPageState extends State<SignUpPage> {
         Theme(
           data: Theme.of(context).copyWith(canvasColor: Colors.grey[900]),
           child: DropdownButtonFormField<String>(
-            value: selected,
+            initialValue: selected,
             iconEnabledColor: Colors.white,
             dropdownColor: Colors.black87,
             decoration: _inputDecoration(),
