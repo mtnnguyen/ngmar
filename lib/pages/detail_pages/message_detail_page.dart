@@ -3,6 +3,9 @@ import '../navbar_widget.dart'; // ✅ Relative path to navbar widget
 
 const darkBackground = Color(0xFF121212);
 
+// === Image base config (change here if site/domain changes) ===
+const String _kImageBaseUrl = 'http://35.182.97.114/images/TEST_SITE/';
+
 class MessageDetailPage extends StatelessWidget {
   final List<Map<String, dynamic>> alerts;
   final int currentIndex;
@@ -31,14 +34,56 @@ class MessageDetailPage extends StatelessWidget {
 
   String _formatDate(DateTime d) => '${d.month}/${d.day}/${d.year}';
 
+  /// Normalizes any incoming image path to the TEST_SITE base:
+  /// - Absolute URLs with /images/... -> rewritten to _kImageBaseUrl + remainder
+  /// - Paths starting with /images/... -> rewritten to _kImageBaseUrl + remainder
+  /// - Plain relative like CAM_001/... -> prefixed with _kImageBaseUrl
   String? fixImageUrl(String? url) {
-    if (url == null || url.isEmpty) return null;
-    if (url.startsWith('http')) return url;
-    return 'https://your-api-or-cdn-url.com$url'; // 🔁 Replace this with actual base URL
+    if (url == null) return null;
+    final u = url.trim();
+    if (u.isEmpty) return null;
+
+    // If already absolute
+    final isAbs = u.startsWith('http://') || u.startsWith('https://');
+    if (isAbs) {
+      // If it already targets /images/TEST_SITE/, keep as-is
+      if (u.contains('/images/TEST_SITE/')) {
+        return u;
+      }
+      // If it targets any /images/ path (e.g., http://your-server/images/..., or IP/images/...)
+      final imagesIdx = u.indexOf('/images/');
+      if (imagesIdx != -1) {
+        final afterImages = u.substring(imagesIdx + '/images/'.length);
+        // Ensure we don't duplicate TEST_SITE
+        final remainder = afterImages.startsWith('TEST_SITE/')
+            ? afterImages.substring('TEST_SITE/'.length)
+            : afterImages;
+        return '$_kImageBaseUrl$remainder';
+      }
+      // Absolute but not under /images/. Treat as a fully-qualified direct URL.
+      return u;
+    }
+
+    // If it starts with /images/...
+    if (u.startsWith('/images/')) {
+      final afterImages = u.substring('/images/'.length);
+      final remainder = afterImages.startsWith('TEST_SITE/')
+          ? afterImages.substring('TEST_SITE/'.length)
+          : afterImages;
+      return '$_kImageBaseUrl$remainder';
+    }
+
+    // Otherwise treat as a relative asset path like CAM_001/...
+    return '$_kImageBaseUrl$u';
   }
 
   String? _imageUrl(Map<String, dynamic> a) {
-    final raw = (a['image_url'] ?? a['imageUrl'] ?? a['thumbnail'] ?? a['image'] ?? a['img'])?.toString();
+    final raw = (a['image_url'] ??
+            a['imageUrl'] ??
+            a['thumbnail'] ??
+            a['image'] ??
+            a['img'])
+        ?.toString();
     return fixImageUrl(raw);
   }
 
@@ -51,26 +96,37 @@ class MessageDetailPage extends StatelessWidget {
       return Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: items.map((s) => Chip(
-          label: Text(s, style: const TextStyle(color: Colors.white)),
-          backgroundColor: const Color(0xFF1F1F1F),
-          side: BorderSide.none,
-        )).toList(),
+        children: items
+            .map((s) => Chip(
+                  label: Text(s, style: const TextStyle(color: Colors.white)),
+                  backgroundColor: const Color(0xFF1F1F1F),
+                  side: BorderSide.none,
+                ))
+            .toList(),
       );
     }
 
-    final raw = (a['alert_message'] ?? a['preview'] ?? a['alert_message_code'] ?? '').toString();
+    final raw = (a['alert_message'] ??
+            a['preview'] ??
+            a['alert_message_code'] ??
+            '')
+        .toString();
     final pretty = raw.replaceAll('_', ' ').trim();
     if (pretty.isEmpty) {
-      return const Text('No additional details provided.', style: TextStyle(color: Colors.white70));
+      return const Text('No additional details provided.',
+          style: TextStyle(color: Colors.white70));
     }
-    return Text(pretty[0].toUpperCase() + pretty.substring(1), style: const TextStyle(color: Colors.white70));
+    return Text(pretty[0].toUpperCase() + pretty.substring(1),
+        style: const TextStyle(color: Colors.white70));
   }
 
   @override
   Widget build(BuildContext context) {
     final alert = _alert;
     final img = _imageUrl(alert);
+    // Helpful log while integrating:
+    // ignore: avoid_print
+    print('[MessageDetailPage] imageUrl = $img');
     final heroTag = 'alert-image-$currentIndex';
 
     return Scaffold(
@@ -81,14 +137,17 @@ class MessageDetailPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
             child: ListView(
               children: [
-                Text(_formatDate(alert['date'] as DateTime), style: const TextStyle(color: Colors.grey)),
+                Text(_formatDate(alert['date'] as DateTime),
+                    style: const TextStyle(color: Colors.grey)),
                 const SizedBox(height: 12),
                 Text(
                   (alert['title'] ?? 'Alert').toString(),
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                const Text('What we see', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                const Text('What we see',
+                    style: TextStyle(color: Colors.white70, fontSize: 13)),
                 const SizedBox(height: 8),
                 _whatWeSee(alert),
                 const SizedBox(height: 16),
@@ -105,19 +164,23 @@ class MessageDetailPage extends StatelessWidget {
                           child: Image.network(
                             img,
                             fit: BoxFit.cover,
+                            gaplessPlayback: true,
                             loadingBuilder: (context, child, loadingProgress) =>
                                 loadingProgress == null
                                     ? child
                                     : const Center(
                                         child: Padding(
                                           padding: EdgeInsets.all(24),
-                                          child: CircularProgressIndicator(color: Colors.white),
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white),
                                         ),
                                       ),
-                            errorBuilder: (context, error, stackTrace) => Container(
+                            errorBuilder:
+                                (context, error, stackTrace) => Container(
                               color: const Color(0xFF1A1A1A),
                               alignment: Alignment.center,
-                              child: const Text('Failed to load image', style: TextStyle(color: Colors.redAccent)),
+                              child: const Text('Failed to load image',
+                                  style: TextStyle(color: Colors.redAccent)),
                             ),
                           ),
                         ),
@@ -132,7 +195,8 @@ class MessageDetailPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     alignment: Alignment.center,
-                    child: const Text('No image available', style: TextStyle(color: Colors.white54)),
+                    child: const Text('No image available',
+                        style: TextStyle(color: Colors.white54)),
                   ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(

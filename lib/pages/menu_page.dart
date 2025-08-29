@@ -7,7 +7,7 @@ import 'employee_time_tracking_page.dart';
 import 'pharmacy_governance_page.dart';
 import 'graphql_service.dart';
 import 'navbar_widget.dart';
-import 'alerts_page.dart'; // for onAlertsTap navigation
+import 'alerts_page.dart';
 
 class MenuPage extends StatefulWidget {
   final int partyId;
@@ -36,10 +36,22 @@ class _MenuPageState extends State<MenuPage> {
   bool isLoading = true;
 
   static const productOptions = {
-    'IND_SUR': 'Indoor Surveillance',
-    'OUT_SUR': 'Outdoor Surveillance',
-    'TIM_TRA': 'Employee Time Tracking',
-    'PHA_GOV': 'Pharmacy Governance',
+    'IND_SUR': {
+      'title': 'Indoor Surveillance',
+      'icon': 'assets/images/products/IND_SUR/green_ind.png',
+    },
+    'OUT_SUR': {
+      'title': 'Outdoor Surveillance',
+      'icon': 'assets/images/products/OUT_SUR/green_out.png',
+    },
+    'TIM_TRA': {
+      'title': 'Employee Time Tracking',
+      'icon': 'assets/images/products/TIM_TRA/green_tim.png',
+    },
+    'PHA_GOV': {
+      'title': 'Pharmacy Governance',
+      'icon': 'assets/images/products/PHA_GOV/green_phar.png',
+    },
   };
 
   @override
@@ -72,7 +84,6 @@ class _MenuPageState extends State<MenuPage> {
         actions: [
           TopRightNavBar(
             onAlertsTap: () {
-              // Go to Alerts
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -81,6 +92,8 @@ class _MenuPageState extends State<MenuPage> {
                     username: widget.username,
                     password: widget.password,
                     siteName: widget.siteName,
+                    fullName: widget.fullName,
+                    email: widget.email,
                   ),
                 ),
               );
@@ -88,9 +101,7 @@ class _MenuPageState extends State<MenuPage> {
             onPushTap: () {
               debugPrint('Push notification tapped');
             },
-            onMenuTap: () {
-              // Already on Menu; no-op (or show a popup if you want)
-            },
+            onMenuTap: () {},
           ),
         ],
       ),
@@ -114,6 +125,10 @@ class _MenuPageState extends State<MenuPage> {
                                     builder: (context) => AccountPage(
                                       fullName: widget.fullName,
                                       email: widget.email,
+                                      partyId: widget.partyId,
+                                      username: widget.username,
+                                      password: widget.password,
+                                      siteName: widget.siteName,
                                     ),
                                   ),
                                 );
@@ -155,7 +170,10 @@ class _MenuPageState extends State<MenuPage> {
                               leading: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
                               title: const Text('My Products', style: TextStyle(color: Colors.white)),
                               children: licensedProductCodes.map((code) {
-                                final title = productOptions[code] ?? code;
+                                final product = productOptions[code];
+                                final title = product?['title'] ?? code;
+                                final iconPath = product?['icon'] ?? '';
+
                                 Widget page;
                                 switch (code) {
                                   case 'IND_SUR':
@@ -199,18 +217,12 @@ class _MenuPageState extends State<MenuPage> {
                                     );
                                     break;
                                   default:
-                                    page = MyProductsPage(
-                                      siteName: widget.siteName,
-                                      partyId: widget.partyId,
-                                      username: widget.username,
-                                      password: widget.password,
-                                      fullName: widget.fullName,
-                                      email: widget.email,
-                                    );
+                                    return const SizedBox(); // or just skip rendering unknown product
                                 }
-
                                 return ListTile(
-                                  leading: const Icon(Icons.circle, size: 10, color: Colors.white54),
+                                  leading: iconPath.isNotEmpty
+                                      ? Image.asset(iconPath, height: 28)
+                                      : const Icon(Icons.circle, size: 10, color: Colors.white54),
                                   title: Text(title, style: const TextStyle(color: Colors.white)),
                                   onTap: () {
                                     Navigator.push(

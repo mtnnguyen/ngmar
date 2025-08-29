@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+
 import 'pages/alerts_page.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';
@@ -13,7 +14,10 @@ final HttpLink httpLink = HttpLink(
 );
 
 final ValueNotifier<GraphQLClient> client = ValueNotifier(
-  GraphQLClient(link: httpLink, cache: GraphQLCache(store: InMemoryStore())),
+  GraphQLClient(
+    link: httpLink,
+    cache: GraphQLCache(store: InMemoryStore()),
+  ),
 );
 
 void main() async {
@@ -39,15 +43,19 @@ class InboxApp extends StatelessWidget {
         },
         onGenerateRoute: (settings) {
           if (settings.name == '/home') {
-            final args = settings.arguments as Map<String, dynamic>;
-            return MaterialPageRoute(
-              builder: (_) => HomePage(
-                username: args['username'],
-                password: args['password'],
-                siteName: args['siteName'],
-                partyId: args['partyId'],
-              ),
-            );
+            final args = settings.arguments;
+            if (args is Map<String, dynamic>) {
+              return MaterialPageRoute(
+                builder: (_) => HomePage(
+                  username: args['username'],
+                  password: args['password'],
+                  siteName: args['siteName'],
+                  partyId: args['partyId'],
+                  fullName: args['fullName'] ?? args['username'],
+                  email: args['email'] ?? '',
+                ),
+              );
+            }
           }
           return null;
         },
@@ -61,6 +69,8 @@ class HomePage extends StatefulWidget {
   final String password;
   final String siteName;
   final int partyId;
+  final String fullName;
+  final String email;
 
   const HomePage({
     super.key,
@@ -68,6 +78,8 @@ class HomePage extends StatefulWidget {
     required this.password,
     required this.siteName,
     required this.partyId,
+    required this.fullName,
+    required this.email,
   });
 
   @override
@@ -87,6 +99,8 @@ class _HomePageState extends State<HomePage> {
         username: widget.username,
         password: widget.password,
         siteName: widget.siteName,
+        fullName: widget.fullName,
+        email: widget.email,
       ),
     ];
   }

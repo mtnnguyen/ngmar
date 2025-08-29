@@ -1,59 +1,149 @@
 import 'package:flutter/material.dart';
-import 'pharmacy_scene_painter.dart';
+import 'package:flutter/services.dart' show rootBundle;
+
 import 'graphql_service.dart';
-import 'product_status_page.dart';
 import 'navbar_widget.dart';
 import 'alerts_page.dart';
+import 'menu_page.dart';
 
 const darkBackground = Color(0xFF121212);
-
-// image root that matches your tree
 const _assetRoot = 'assets/images';
 
-const productMetadata = {
-  'IND_SUR': {'name': 'Indoor Surveillance', 'icon': Icons.sensor_door},
-  'OUT_SUR': {'name': 'Outdoor Surveillance', 'icon': Icons.videocam_outlined},
-  'TIM_TRA': {'name': 'Employee Time Tracking', 'icon': Icons.access_time},
-  'PHA_GOV': {'name': 'Pharmacy Governance', 'icon': Icons.local_pharmacy},
+const _productMap = {
+  'IND_SUR': 'Indoor Surveillance',
+  'OUT_SUR': 'Outdoor Surveillance',
+  'TIM_TRA': 'Employee Time Tracking',
+  'PHA_GOV': 'Pharmacy Governance',
 };
 
-class MyProductsPage extends StatefulWidget {
-  final String username;
-  final String password;
+class ProductStatusPage extends StatefulWidget {
+  final String productCode;
   final String siteName;
   final int partyId;
+  final String username;
+  final String password;
   final String fullName;
   final String email;
+  final bool showStatusDotRightAligned;
 
-  const MyProductsPage({
+  const ProductStatusPage({
     super.key,
-    required this.username,
-    required this.password,
+    required this.productCode,
     required this.siteName,
     required this.partyId,
+    required this.username,
+    required this.password,
     required this.fullName,
     required this.email,
+    this.showStatusDotRightAligned = false,
   });
 
   @override
-  State<MyProductsPage> createState() => _MyProductsPageState();
+  State<ProductStatusPage> createState() => _ProductStatusPageState();
 }
 
-class _MyProductsPageState extends State<MyProductsPage>
+class _ProductStatusPageState extends State<ProductStatusPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  List<Map<String, dynamic>> availableSections = [];
-
+  late String _selectedCode;
+  List<String> _availableCodes = [];
   bool _loading = true;
   String? _error;
+  int? _productStatusFlag;
+  List<Map<String, dynamic>> _statuses = [];
+  bool _showProductList = false;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  bool get _dotRight => widget.showStatusDotRightAligned;
 
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 3))
-          ..repeat();
-    fetchProducts();
+    _selectedCode = widget.productCode;
+    _fadeController =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut);
+    _fetchAvailableProducts();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchAvailableProducts() async {
+    try {
+      final svc = GraphQLService();
+      final codes =
+          await svc.getProducts(siteName: widget.siteName, partyId: widget.partyId);
+
+      setState(() {
+        _availableCodes = (codes ?? []).cast<String>();
+      });
+
+      await _fetchStatus();
+    } catch (_) {
+      setState(() {
+        _availableCodes = [widget.productCode];
+        _error = 'Failed to load product list.';
+      });
+    }
+  }
+
+  Future<void> _fetchStatus() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+      _statuses = [];
+      _productStatusFlag = null;
+    });
+
+    try {
+      final svc = GraphQLService();
+      final resp = await svc.getProductStatus(
+        siteName: widget.siteName,
+        partyId: widget.partyId,
+        productCode: _selectedCode,
+      );
+
+      if (resp == null) {
+        setState(() {
+          _error = 'Unable to load product status.';
+          _loading = false;
+        });
+        return;
+      }
+
+      final rawFlag = resp['product_status_flag'];
+      final resolvedFlag = rawFlag is int ? rawFlag : (int.tryParse('$rawFlag') ?? 0);
+
+      final statuses = (resp['statuses'] as List?)
+              ?.map((e) => (e as Map).map((k, v) => MapEntry(k.toString(), v)))
+              .cast<Map<String, dynamic>>()
+              .toList() ??
+          <Map<String, dynamic>>[];
+
+      setState(() {
+        _productStatusFlag = resolvedFlag;
+        _statuses = statuses;
+        _loading = false;
+      });
+
+      // Warm the asset (and try amber if yellow missing).
+      try {
+        await rootBundle.load(_assetFor(_selectedCode, resolvedFlag));
+      } catch (_) {
+        try {
+          await rootBundle
+              .load(_assetFor(_selectedCode, resolvedFlag).replaceFirst('/yellow_', '/amber_'));
+        } catch (_) {}
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load product status.';
+        _loading = false;
+      });
+    }
   }
 
   String _colorFor(int? flag) {
@@ -62,31 +152,24 @@ class _MyProductsPageState extends State<MyProductsPage>
         return 'yellow';
       case 2:
         return 'red';
-      case 0:
       default:
         return 'green';
     }
   }
 
   String _shortFor(String code) {
-    const map = {
-      'IND_SUR': 'ind',
-      'OUT_SUR': 'out',
-      'PHA_GOV': 'phar',
-      'TIM_TRA': 'tim',
-    };
+    const map = {'IND_SUR': 'ind', 'OUT_SUR': 'out', 'PHA_GOV': 'phar', 'TIM_TRA': 'tim'};
     return map[code] ?? code.toLowerCase();
   }
 
-  String _assetFor(String productCode, int? flag) {
+  String _assetFor(String code, int? flag) {
     final color = _colorFor(flag);
-    final short = _shortFor(productCode);
-    return '$_assetRoot/products/$productCode/${color}_$short.png';
+    final short = _shortFor(code);
+    return '$_assetRoot/products/$code/${color}_$short.png';
   }
 
-  Color _dotColorFromAssetPath(String assetPath) {
-    final file = assetPath.split('/').last.toLowerCase();
-    final prefix = file.split('_').first;
+  Color _dotColorFromAssetPath(String path) {
+    final prefix = path.split('/').last.toLowerCase().split('_').first;
     switch (prefix) {
       case 'green':
         return Colors.green;
@@ -100,139 +183,21 @@ class _MyProductsPageState extends State<MyProductsPage>
     }
   }
 
-  Future<void> fetchProducts() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-      availableSections.clear();
-    });
-
-    final graphqlService = GraphQLService();
-
-    try {
-      final productCodes = await graphqlService.getProducts(
-        siteName: widget.siteName,
-        partyId: widget.partyId,
-      );
-
-      if (!mounted) return;
-
-      if (productCodes.isEmpty) {
-        throw Exception('No products found.');
-      }
-
-      final codes =
-          productCodes.where((c) => productMetadata.containsKey(c)).toList();
-
-      final results = await Future.wait(codes.map((code) async {
-        final status = await graphqlService.getProductStatus(
-          siteName: widget.siteName,
-          partyId: widget.partyId,
-          productCode: code,
-        );
-        return {'code': code, 'status': status};
-      }));
-
-      if (!mounted) return;
-
-      final sections = <Map<String, dynamic>>[];
-      for (final r in results) {
-        final code = r['code'] as String;
-        final status = r['status'] as Map<String, dynamic>?;
-        if (status == null) continue;
-
-        final meta = productMetadata[code]!;
-        final rawFlag = status['product_status_flag'];
-        final flag = rawFlag is int ? rawFlag : int.tryParse('$rawFlag') ?? 0;
-
-        sections.add({
-          'title': meta['name'],
-          'icon': meta['icon'],
-          'code': code,
-          'flag': flag,
-        });
-      }
-
-      setState(() {
-        availableSections = sections;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = 'Failed to load products. Please try again later.';
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Widget _buildAnimatedHeader() {
-    return SizedBox(
-      height: 240,
-      width: double.infinity,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) =>
-            CustomPaint(painter: PharmacyScenePainter(animationValue: _controller.value)),
-      ),
-    );
-  }
-
-  Widget _buildSectionTile(String title, IconData icon, String code, {int? flag}) {
-    final assetPath = _assetFor(code, flag);
-    final dotColor = _dotColorFromAssetPath(assetPath);
-
-    return Card(
-      color: Colors.grey.shade900,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      margin: const EdgeInsets.only(bottom: 16),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        leading: Icon(icon, color: Colors.lightBlueAccent, size: 32),
-        title: Text(title, style: const TextStyle(fontSize: 18, color: Colors.white)),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.circle, color: dotColor, size: 12),
-            const SizedBox(width: 10),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 18),
-          ],
-        ),
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ProductStatusPage(
-                siteName: widget.siteName,
-                partyId: widget.partyId,
-                productCode: code,
-                username: widget.username,
-                password: widget.password,
-                fullName: widget.fullName,
-                email: widget.email,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final assetPath = _assetFor(_selectedCode, _productStatusFlag);
+    final altPath = assetPath.replaceFirst('/yellow_', '/amber_');
+    final dotColor = _dotColorFromAssetPath(assetPath);
+
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
         backgroundColor: darkBackground,
         centerTitle: true,
-        title: const Text('My Products'),
+        title: Text(
+          _productMap[_selectedCode] ?? _selectedCode,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         actions: [
           TopRightNavBar(
             onAlertsTap: () {
@@ -244,46 +209,168 @@ class _MyProductsPageState extends State<MyProductsPage>
                     username: widget.username,
                     password: widget.password,
                     siteName: widget.siteName,
+                    fullName: widget.fullName,
+                    email: widget.email,
                   ),
                 ),
               );
             },
             onPushTap: () => debugPrint('Push notification tapped'),
             onMenuTap: () {
-              // Navigate back to Menu if needed:
-              Navigator.popUntil(context, (r) => r.isFirst);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MenuPage(
+                    partyId: widget.partyId,
+                    username: widget.username,
+                    password: widget.password,
+                    siteName: widget.siteName,
+                    fullName: widget.fullName,
+                    email: widget.email,
+                  ),
+                ),
+              );
             },
           ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: fetchProducts,
+        onRefresh: _fetchStatus,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildAnimatedHeader(),
-            const SizedBox(height: 16),
+            // Product picker (expand/collapse)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showProductList = !_showProductList;
+                        if (_showProductList) {
+                          _fadeController.forward();
+                        } else {
+                          _fadeController.reverse();
+                        }
+                      });
+                    },
+                    child: Row(
+                      children: [
+                        const Text(
+                          'Product',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          _showProductList ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizeTransition(
+                    sizeFactor: _fadeAnimation,
+                    axisAlignment: -1.0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _availableCodes
+                          .where((code) => code != _selectedCode)
+                          .map(
+                            (code) => ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                _productMap[code] ?? code,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _selectedCode = code;
+                                  _showProductList = false;
+                                });
+                                _fadeController.reverse();
+                                _fetchStatus();
+                              },
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Status image
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: Center(
+                key: ValueKey(assetPath),
+                child: SizedBox(
+                  height: 140,
+                  child: Image.asset(
+                    assetPath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      altPath,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) =>
+                          Icon(Icons.circle, size: 120, color: dotColor),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Status list
             if (_loading)
-              const Center(child: CircularProgressIndicator())
-            else if (_error != null)
-              Center(
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 16),
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 24),
+                  child: CircularProgressIndicator(),
                 ),
               )
-            else if (availableSections.isEmpty)
+            else if (_error != null)
+              Column(
+                children: [
+                  Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.redAccent),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton(onPressed: _fetchStatus, child: const Text('Retry')),
+                ],
+              )
+            else if (_statuses.isEmpty)
               const Center(
-                child: Text('No products available.',
+                child: Text('No statuses available.',
                     style: TextStyle(color: Colors.white70)),
               )
             else
-              ...availableSections.map((s) => _buildSectionTile(
-                    s['title'] as String,
-                    s['icon'] as IconData,
-                    s['code'] as String,
-                    flag: s['flag'] as int?,
-                  )),
+              ..._statuses.map((item) {
+                final name = item['product_status_name']?.toString() ?? 'Unknown';
+                final value = item['product_status_value']?.toString() ?? '';
+                return Card(
+                  color: Colors.grey.shade900,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    title: Text(
+                      '$name : $value',
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    trailing: widget.showStatusDotRightAligned
+                        ? Icon(Icons.circle, color: dotColor, size: 12)
+                        : null,
+                  ),
+                );
+              }),
           ],
         ),
       ),

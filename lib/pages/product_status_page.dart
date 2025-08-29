@@ -121,11 +121,15 @@ class _ProductStatusPageState extends State<ProductStatusPage>
           <Map<String, dynamic>>[];
 
       setState(() {
-        _productStatusFlag = resolvedFlag;
-        _statuses = statuses;
-        _loading = false;
-      });
+        _productStatusFlag = _statuses.any((s) => s['product_status_flag'] == 2)
+          ? 2
+          : _statuses.any((s) => s['product_status_flag'] == 1)
+              ? 1
+              : 0;
 
+              _statuses = statuses;
+              _loading = false;
+            });
       // Warm the asset (and try amber if yellow missing).
       try {
         await rootBundle.load(_assetFor(_selectedCode, resolvedFlag));
@@ -165,18 +169,14 @@ class _ProductStatusPageState extends State<ProductStatusPage>
     return '$_assetRoot/products/$code/${color}_$short.png';
   }
 
-  (Color, String) _colorLabelFromAssetPath(String path) {
-    final prefix = path.split('/').last.toLowerCase().split('_').first;
-    switch (prefix) {
-      case 'green':
-        return (Colors.green, 'GREEN');
-      case 'yellow':
-      case 'amber':
-        return (Colors.orange, 'YELLOW');
-      case 'red':
-        return (Colors.red, 'RED');
+  Color _colorFromFlag(int? flag) {
+    switch (flag) {
+      case 1:
+        return Colors.orange;
+      case 2:
+        return Colors.red;
       default:
-        return (Colors.white70, 'UNKNOWN');
+        return Colors.green;
     }
   }
 
@@ -184,7 +184,6 @@ class _ProductStatusPageState extends State<ProductStatusPage>
   Widget build(BuildContext context) {
     final assetPath = _assetFor(_selectedCode, _productStatusFlag);
     final altPath = assetPath.replaceFirst('/yellow_', '/amber_');
-    final (dotColor, dotLabel) = _colorLabelFromAssetPath(assetPath);
 
     return Scaffold(
       backgroundColor: darkBackground,
@@ -206,6 +205,8 @@ class _ProductStatusPageState extends State<ProductStatusPage>
                     username: widget.username,
                     password: widget.password,
                     siteName: widget.siteName,
+                    fullName: widget.fullName,
+                    email: widget.email,
                   ),
                 ),
               );
@@ -310,23 +311,11 @@ class _ProductStatusPageState extends State<ProductStatusPage>
                       altPath,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) =>
-                          Icon(Icons.circle, size: 120, color: dotColor),
+                          Icon(Icons.circle, size: 120, color: _colorFromFlag(_productStatusFlag)),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.circle, size: 12, color: dotColor),
-                const SizedBox(width: 8),
-                Text(
-                  dotLabel,
-                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
-                ),
-              ],
             ),
 
             const SizedBox(height: 24),
@@ -360,6 +349,8 @@ class _ProductStatusPageState extends State<ProductStatusPage>
               ..._statuses.map((item) {
                 final name = item['product_status_name']?.toString() ?? 'Unknown';
                 final value = item['product_status_value']?.toString() ?? '';
+                final flag = item['product_status_flag'] as int? ?? 0;
+                final dotColor = _colorFromFlag(flag);
                 return Card(
                   color: Colors.grey.shade900,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -368,9 +359,17 @@ class _ProductStatusPageState extends State<ProductStatusPage>
                   child: ListTile(
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    title: Text(
-                      '$name : $value',
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '$name : $value',
+                            style: const TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                        Icon(Icons.circle, size: 14, color: dotColor),
+                      ],
                     ),
                   ),
                 );

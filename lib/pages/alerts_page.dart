@@ -3,6 +3,7 @@ import 'graphql_service.dart';
 import 'detail_pages/message_detail_page.dart';
 import 'navbar_widget.dart';
 import 'menu_page.dart';
+import 'push_notifications_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
@@ -13,12 +14,16 @@ class AlertsPage extends StatefulWidget {
     required this.username,
     required this.password,
     required this.siteName,
+    required this.fullName,
+    required this.email,
   });
 
   final int partyId;
   final String username;
   final String password;
   final String siteName;
+  final String fullName;
+  final String email;
 
   @override
   State<AlertsPage> createState() => _AlertsPageState();
@@ -82,8 +87,8 @@ class _AlertsPageState extends State<AlertsPage> {
             ];
       isLoading = false;
 
-      fullName = widget.username;
-      email = 'unknown@email.com';
+      fullName = widget.fullName;
+      email = widget.email;
     });
   }
 
@@ -150,11 +155,27 @@ class _AlertsPageState extends State<AlertsPage> {
               username: widget.username,
               password: widget.password,
               siteName: widget.siteName,
+              fullName: fullName ?? widget.username,
+              email: email ?? '',
             ),
           ),
         );
       },
-      onPushTap: () => debugPrint('Push notification tapped'),
+      onPushTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PushNotificationsPage(
+              partyId: widget.partyId,
+              username: widget.username,
+              password: widget.password,
+              siteName: widget.siteName,
+              fullName: fullName ?? widget.username,
+              email: email ?? '',
+            ),
+          ),
+        );
+      },
       onMenuTap: () {
         Navigator.push(
           context,
@@ -165,7 +186,7 @@ class _AlertsPageState extends State<AlertsPage> {
               password: widget.password,
               siteName: widget.siteName,
               fullName: fullName ?? widget.username,
-              email: email ?? 'unknown@email.com',
+              email: email ?? '',
             ),
           ),
         );
@@ -183,8 +204,7 @@ class _AlertsPageState extends State<AlertsPage> {
           key: _filterKey,
           icon: const Icon(Icons.filter_list),
           onPressed: () async {
-            final RenderBox button =
-                _filterKey.currentContext!.findRenderObject() as RenderBox;
+            final RenderBox button = _filterKey.currentContext!.findRenderObject() as RenderBox;
             final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
             final Offset position = button.localToGlobal(Offset.zero, ancestor: overlay);
 
@@ -211,7 +231,21 @@ class _AlertsPageState extends State<AlertsPage> {
         actions: [
           TopRightNavBar(
             onAlertsTap: () => _sortAlerts('newest'),
-            onPushTap: () => debugPrint('Push notification tapped'),
+            onPushTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PushNotificationsPage(
+                    partyId: widget.partyId,
+                    username: widget.username,
+                    password: widget.password,
+                    siteName: widget.siteName,
+                    fullName: fullName ?? widget.username,
+                    email: email ?? '',
+                  ),
+                ),
+              );
+            },
             onMenuTap: () {
               Navigator.push(
                 context,
@@ -222,7 +256,7 @@ class _AlertsPageState extends State<AlertsPage> {
                     password: widget.password,
                     siteName: widget.siteName,
                     fullName: fullName ?? widget.username,
-                    email: email ?? 'unknown@email.com',
+                    email: email ?? '',
                   ),
                 ),
               );

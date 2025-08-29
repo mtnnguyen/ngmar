@@ -12,7 +12,6 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
-/// State for the LoginPage that handles user input and authentication.
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -21,7 +20,7 @@ class _LoginPageState extends State<LoginPage> {
 
   final GraphQLService _service = GraphQLService();
 
-  /// Robustly extract partyId from various possible API shapes.
+  /// Robustly extract partyId from various possible API response structures.
   int _extractPartyId(dynamic data) {
     final candidates = [
       data?['party_id'],
@@ -42,7 +41,21 @@ class _LoginPageState extends State<LoginPage> {
     throw StateError('partyId not found in sign-in response');
   }
 
-  /// Signs in the user with the provided username and password.
+  /// Extracts full name and email from the API response.
+  Map<String, String> _extractUserInfo(dynamic user) {
+    final fullName = user['full_name'] ??
+        user['name'] ??
+        user['user_name'] ??
+        '${user['first_name'] ?? ''} ${user['last_name'] ?? ''}'.trim();
+
+    final email = user['email'] ?? '';
+
+    return {
+      'fullName': fullName.isNotEmpty ? fullName : 'User',
+      'email': email.isNotEmpty ? email : 'no-email@domain.com',
+    };
+  }
+
   Future<void> _signIn() async {
     setState(() {
       _isLoading = true;
@@ -63,11 +76,15 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      if (data['error_code'] == null && (data['party'] != null || true)) {
+      if (data['error_code'] == null) {
         final partyId = _extractPartyId(data);
         final user = data['party'] ?? data['user'] ?? {};
 
-        debugPrint('Signed in as: ${user['user_name'] ?? 'unknown'} (${user['email'] ?? 'no email'}) | partyId=$partyId');
+        final userInfo = _extractUserInfo(user);
+        final fullName = userInfo['fullName']!;
+        final email = userInfo['email']!;
+
+        debugPrint('Signed in as: $fullName <$email> | partyId=$partyId');
 
         if (!mounted) return;
 
@@ -79,6 +96,8 @@ class _LoginPageState extends State<LoginPage> {
               username: username,
               password: password,
               siteName: siteName,
+              fullName: fullName,
+              email: email,
             ),
           ),
         );
@@ -100,7 +119,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// Builds the login page UI.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,10 +126,7 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         title: const Text(
           'Sign In',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: const Color(0xFF1E1E1E),
@@ -129,22 +144,22 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset(
-                        'assets/images/logo.png',
-                        height: 100,
-                      ),
+                      Image.asset('assets/images/logo.png', height: 100),
                       const SizedBox(height: 40),
                       _buildInputField('User name', _usernameController),
                       _buildInputField('Password', _passwordController, obscure: true),
                       const SizedBox(height: 24),
-                      if (_errorMessage != null) ...[
-                        Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Colors.redAccent),
-                          textAlign: TextAlign.center,
+                      if (_errorMessage != null)
+                        Column(
+                          children: [
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: Colors.redAccent),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                      ],
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -175,9 +190,7 @@ class _LoginPageState extends State<LoginPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                               recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.pushNamed(context, '/signup');
-                                },
+                                ..onTap = () => Navigator.pushNamed(context, '/signup'),
                             ),
                           ],
                         ),
@@ -187,8 +200,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-
-            // Footer section
             const Padding(
               padding: EdgeInsets.only(bottom: 16),
               child: Column(
@@ -215,7 +226,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// Builds a text input field with a label.
   Widget _buildInputField(String label, TextEditingController controller, {bool obscure = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +242,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// Builds a label for the input fields.
   Widget _buildLabel(String label) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
@@ -241,7 +250,6 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
 
-  /// Returns the decoration for the input fields.
   InputDecoration _inputDecoration() {
     return const InputDecoration(
       filled: true,

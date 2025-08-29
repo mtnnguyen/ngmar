@@ -1,11 +1,29 @@
+// lib/pages/account_page.dart
 import 'package:flutter/material.dart';
 import 'login_page.dart';
+import 'personal_info_page.dart';
+import 'notifications_page.dart';
+import 'security_privacy_page.dart';
+import 'push_notifications_page.dart';
+import 'graphql_service.dart';
 
 class AccountPage extends StatelessWidget {
   final String fullName;
   final String email;
+  final int partyId;
+  final String username;
+  final String password;
+  final String siteName;
 
-  const AccountPage({super.key, required this.fullName, required this.email});
+  const AccountPage({
+    super.key,
+    required this.fullName,
+    required this.email,
+    required this.partyId,
+    required this.username,
+    required this.password,
+    required this.siteName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +41,6 @@ class AccountPage extends StatelessWidget {
       body: Column(
         children: [
           const SizedBox(height: 24),
-
-          // Profile Picture
           Stack(
             alignment: Alignment.center,
             children: [
@@ -37,21 +53,11 @@ class AccountPage extends StatelessWidget {
                 bottom: 0,
                 right: 0,
                 child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.blue,
-                    border: Border.all(color: Colors.black, width: 2),
-                  ),
-                  padding: const EdgeInsets.all(4),
-                  child: const Icon(Icons.add, size: 18, color: Colors.white),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 24),
-
-          // Account Options
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -59,23 +65,46 @@ class AccountPage extends StatelessWidget {
                 _AccountOption(
                   icon: Icons.person_outline,
                   label: 'Personal Information',
-                  onTap: () {},
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PersonalInfoPage(
+                        fullName: fullName,
+                        email: email,
+                      ),
+                    ),
+                  ),
                 ),
                 _AccountOption(
                   icon: Icons.notifications_none,
                   label: 'Notifications',
-                  onTap: () {},
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationsPage(
+                        partyId: partyId,
+                        username: username,
+                        password: password,
+                        siteName: siteName,
+                        fullName: fullName,
+                        email: email,
+                      ),
+                    ),
+                  ),
                 ),
                 _AccountOption(
                   icon: Icons.lock_outline,
                   label: 'Security & Privacy',
-                  onTap: () {},
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SecurityPrivacyPage(),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-
-          // Sign Out
           Padding(
             padding: const EdgeInsets.only(bottom: 24.0),
             child: InkWell(
