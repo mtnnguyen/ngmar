@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'pharmacy_scene_painter.dart';
 import 'graphql_service.dart';
 import 'product_status_page.dart';
+import 'navbar_widget.dart';
+import 'alerts_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
@@ -20,6 +22,8 @@ class MyProductsPage extends StatefulWidget {
   final String password;
   final String siteName;
   final int partyId;
+  final String fullName;
+  final String email;
 
   const MyProductsPage({
     super.key,
@@ -27,6 +31,8 @@ class MyProductsPage extends StatefulWidget {
     required this.password,
     required this.siteName,
     required this.partyId,
+    required this.fullName,
+    required this.email,
   });
 
   @override
@@ -50,9 +56,6 @@ class _MyProductsPageState extends State<MyProductsPage>
     fetchProducts();
   }
 
-  // --- helpers to mirror ProductStatusPage ---
-
-  // 0/1/2 -> 'green' / 'yellow' / 'red' (filenames)
   String _colorFor(int? flag) {
     switch (flag) {
       case 1:
@@ -65,7 +68,6 @@ class _MyProductsPageState extends State<MyProductsPage>
     }
   }
 
-  // ProductCode -> short suffix used in your filenames
   String _shortFor(String code) {
     const map = {
       'IND_SUR': 'ind',
@@ -76,18 +78,15 @@ class _MyProductsPageState extends State<MyProductsPage>
     return map[code] ?? code.toLowerCase();
   }
 
-  // Build the asset path we would show on the status page
   String _assetFor(String productCode, int? flag) {
     final color = _colorFor(flag);
     final short = _shortFor(productCode);
     return '$_assetRoot/products/$productCode/${color}_$short.png';
-    // e.g. assets/images/products/IND_SUR/green_ind.png
   }
 
-  // Derive the dot color from the actual filename prefix
   Color _dotColorFromAssetPath(String assetPath) {
     final file = assetPath.split('/').last.toLowerCase();
-    final prefix = file.split('_').first; // green / yellow / red
+    final prefix = file.split('_').first;
     switch (prefix) {
       case 'green':
         return Colors.green;
@@ -111,7 +110,6 @@ class _MyProductsPageState extends State<MyProductsPage>
     final graphqlService = GraphQLService();
 
     try {
-      // UPDATED: use getProducts instead of getProductLicenses
       final productCodes = await graphqlService.getProducts(
         siteName: widget.siteName,
         partyId: widget.partyId,
@@ -123,11 +121,9 @@ class _MyProductsPageState extends State<MyProductsPage>
         throw Exception('No products found.');
       }
 
-      // keep only known codes
       final codes =
           productCodes.where((c) => productMetadata.containsKey(c)).toList();
 
-      // fetch each product's status in parallel
       final results = await Future.wait(codes.map((code) async {
         final status = await graphqlService.getProductStatus(
           siteName: widget.siteName,
@@ -142,7 +138,7 @@ class _MyProductsPageState extends State<MyProductsPage>
       final sections = <Map<String, dynamic>>[];
       for (final r in results) {
         final code = r['code'] as String;
-        final status = r['status'] as Map<String, dynamic>?; // null => skip
+        final status = r['status'] as Map<String, dynamic>?;
         if (status == null) continue;
 
         final meta = productMetadata[code]!;
@@ -153,7 +149,7 @@ class _MyProductsPageState extends State<MyProductsPage>
           'title': meta['name'],
           'icon': meta['icon'],
           'code': code,
-          'flag': flag, // keep for building image path
+          'flag': flag,
         });
       }
 
@@ -204,7 +200,6 @@ class _MyProductsPageState extends State<MyProductsPage>
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Dot color derived from the SAME image name used on the status page
             Icon(Icons.circle, color: dotColor, size: 12),
             const SizedBox(width: 10),
             const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 18),
@@ -218,7 +213,10 @@ class _MyProductsPageState extends State<MyProductsPage>
                 siteName: widget.siteName,
                 partyId: widget.partyId,
                 productCode: code,
-                productTitle: title,
+                username: widget.username,
+                password: widget.password,
+                fullName: widget.fullName,
+                email: widget.email,
               ),
             ),
           );
@@ -235,6 +233,28 @@ class _MyProductsPageState extends State<MyProductsPage>
         backgroundColor: darkBackground,
         centerTitle: true,
         title: const Text('My Products'),
+        actions: [
+          TopRightNavBar(
+            onAlertsTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AlertsPage(
+                    partyId: widget.partyId,
+                    username: widget.username,
+                    password: widget.password,
+                    siteName: widget.siteName,
+                  ),
+                ),
+              );
+            },
+            onPushTap: () => debugPrint('Push notification tapped'),
+            onMenuTap: () {
+              // Navigate back to Menu if needed:
+              Navigator.popUntil(context, (r) => r.isFirst);
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: fetchProducts,

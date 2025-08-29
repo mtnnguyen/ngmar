@@ -4,15 +4,31 @@ import 'product_status_page.dart';
 class EmployeeTimeTrackingPage extends StatelessWidget {
   final String siteName;
   final int partyId;
-  const EmployeeTimeTrackingPage({super.key, required this.siteName, required this.partyId});
+  final String username;
+  final String password;
+  final String fullName;
+  final String email;
+
+  const EmployeeTimeTrackingPage({
+    super.key,
+    required this.siteName,
+    required this.partyId,
+    required this.username,
+    required this.password,
+    required this.fullName,
+    required this.email,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ProductStatusPage(
       productCode: 'TIM_TRA',
-      productTitle: 'Employee Time Tracking',
       siteName: siteName,
       partyId: partyId,
+      username: username,
+      password: password,
+      fullName: fullName,
+      email: email,
     );
   }
 }

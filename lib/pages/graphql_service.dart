@@ -1,23 +1,24 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 
 class GraphQLService {
   // --- Endpoints & API keys ---
-  static const _signinUrl   = 'https://kf6iirlcgrbqdmr2b6nq5s6g3q.appsync-api.ca-central-1.amazonaws.com/graphql';
-  static const _signinKey   = 'da2-gyewjbxhlvdarogtzp5mbyrm6m';
+  static const _signinUrl = 'https://kf6iirlcgrbqdmr2b6nq5s6g3q.appsync-api.ca-central-1.amazonaws.com/graphql';
+  static const _signinKey = 'da2-gyewjbxhlvdarogtzp5mbyrm6m';
 
-  static const _signupUrl   = 'https://l5a4sfcxxfbj3icqefjhoup4ti.appsync-api.ca-central-1.amazonaws.com/graphql';
-  static const _signupKey   = 'da2-3g2r42737jf73igdhfsrp2mh2y';
+  static const _signupUrl = 'https://l5a4sfcxxfbj3icqefjhoup4ti.appsync-api.ca-central-1.amazonaws.com/graphql';
+  static const _signupKey = 'da2-3g2r42737jf73igdhfsrp2mh2y';
 
-  static const _alertsUrl   = 'https://tb5xwefsybcitbefa3wksxrazm.appsync-api.ca-central-1.amazonaws.com/graphql';
-  static const _alertsKey   = 'da2-7lmmoz642fb3bakwqc4e5k6ytq';
+  static const _alertsUrl = 'https://tb5xwefsybcitbefa3wksxrazm.appsync-api.ca-central-1.amazonaws.com/graphql';
+  static const _alertsKey = 'da2-7lmmoz642fb3bakwqc4e5k6ytq';
 
-  // Renamed backend: use the same endpoint/key but call getProducts
   static const _productsUrl = 'https://glpt3ohk3zbyfdlla3fnj2r6ny.appsync-api.ca-central-1.amazonaws.com/graphql';
   static const _productsKey = 'da2-hykzcqryevbrjjwc56jbsjcg3m';
 
-  static const _productStatusUrl   = 'https://jnnyyvz3prfudoenrzuudwdtea.appsync-api.ca-central-1.amazonaws.com/graphql';
-  static const _productStatusKey   = 'da2-7tsjq7tch5e2xojhguyhc6pwm4';
+  static const _productStatusUrl = 'https://jnnyyvz3prfudoenrzuudwdtea.appsync-api.ca-central-1.amazonaws.com/graphql';
+  static const _productStatusKey = 'da2-7tsjq7tch5e2xojhguyhc6pwm4';
 
   String? _authToken;
   void setAuthToken(String token) => _authToken = token;
@@ -39,30 +40,35 @@ class GraphQLService {
 
     print('[GraphQLService:_post] POST $url vars=${jsonEncode(variables)}');
 
-    final resp = await http
-        .post(
-          Uri.parse(url),
-          headers: headers,
-          body: jsonEncode({'query': query, 'variables': variables ?? {}}),
-        )
-        .timeout(const Duration(seconds: 25));
-
-    late final Map<String, dynamic> body;
     try {
-      body = jsonDecode(resp.body) as Map<String, dynamic>;
-    } catch (_) {
-      print('[GraphQLService:_post] Non-JSON (code=${resp.statusCode}): ${resp.body}');
-      throw Exception('Non-JSON response from $url (HTTP ${resp.statusCode})');
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: headers,
+            body: jsonEncode({'query': query, 'variables': variables ?? {}}),
+          )
+          .timeout(const Duration(seconds: 25));
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      print('[GraphQLService:_post] Raw response from $url:\n${const JsonEncoder.withIndent('  ').convert(body)}');
+
+      if (response.statusCode != 200) throw Exception('HTTP ${response.statusCode}: ${response.body}');
+      if (body['errors'] != null) throw Exception(jsonEncode(body['errors']));
+
+      final data = body['data'];
+      if (data is! Map<String, dynamic>) throw Exception('Missing "data" in GraphQL response.');
+      return data;
+    } on SocketException {
+      throw Exception('No internet connection.');
+    } on TimeoutException {
+      throw Exception('Request to $url timed out.');
+    } on FormatException {
+      throw Exception('Non-JSON response from $url.');
+    } catch (e) {
+      print('[GraphQLService:_post] Unexpected error: $e');
+      rethrow;
     }
-
-    print('[GraphQLService:_post] Raw response from $url:\n${const JsonEncoder.withIndent('  ').convert(body)}');
-
-    if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}: ${resp.body}');
-    if (body['errors'] != null) throw Exception(jsonEncode(body['errors']));
-
-    final data = body['data'];
-    if (data is! Map<String, dynamic>) throw Exception('Missing "data" in GraphQL response.');
-    return data;
   }
 
   Future<Map<String, dynamic>?> signin(String username, String password, String siteName) async {
@@ -142,8 +148,6 @@ class GraphQLService {
             created_at
             image_url
           }
-          next_cursor
-          total_no_of_pages
         }
       }
     ''';
@@ -168,11 +172,6 @@ class GraphQLService {
     }
   }
 
-  // =========================
-  // PRODUCTS (renamed API)
-  // =========================
-
-  /// New canonical method: fetch product codes for a user on a site.
   Future<List<String>> getProducts({
     required String siteName,
     required int partyId,
@@ -202,29 +201,16 @@ class GraphQLService {
         print('[GraphQLService:getProducts] Unexpected shape: $raw');
         return <String>[];
       }
-      final list = raw
+
+      return raw
           .map((e) => (e as Map<String, dynamic>)['product_code']?.toString())
           .whereType<String>()
           .toList();
-      print('[GraphQLService:getProducts] $list');
-      return list;
     } catch (e) {
       print('[GraphQLService:getProducts] $e');
       return <String>[];
     }
   }
-
-  /// Backward-compat wrapper. Remove once all callers are migrated.
-  @Deprecated('Use getProducts(siteName: ..., partyId: ...) instead.')
-  Future<List<String>> getProductLicenses(String siteName, int partyId, {String? productCode}) {
-    // Backend no longer supports filtering by product_code in this call.
-    // We ignore productCode and delegate to getProducts.
-    return getProducts(siteName: siteName, partyId: partyId);
-  }
-
-  // =========================
-  // PRODUCT STATUS
-  // =========================
 
   Future<Map<String, dynamic>?> getProductStatus({
     required String siteName,
@@ -258,12 +244,22 @@ class GraphQLService {
       final raw = data['getProductStatus'];
       if (raw is List && raw.isNotEmpty) {
         print('[GraphQLService:getProductStatus] $raw');
+
+        // Extract all the flags
+        final flags = raw.map((item) {
+          final f = item['product_status_flag'];
+          return f is int ? f : int.tryParse('$f') ?? 0;
+        }).toList();
+
+        // Determine worst-case (max) flag: 0=green, 1=yellow, 2=red
+        final worstFlag = flags.isNotEmpty ? flags.reduce((a, b) => a > b ? a : b) : 0;
+
         return {
-          'product_status_flag': raw[0]['product_status_flag'],
+          'product_status_flag': worstFlag, // This is what your UI uses to decide image color
           'statuses': raw.map((item) => {
-                'product_status_name': item['product_status_name'],
-                'product_status_value': item['product_status_value'],
-              }).toList(),
+            'product_status_name': item['product_status_name'],
+            'product_status_value': item['product_status_value'],
+          }).toList(),
         };
       }
 

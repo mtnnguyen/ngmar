@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'account_page.dart';
 import 'my_products_page.dart';
+import 'indoor_surveillance_page.dart';
+import 'outdoor_surveillance_page.dart';
+import 'employee_time_tracking_page.dart';
+import 'pharmacy_governance_page.dart';
+import 'graphql_service.dart';
+import 'navbar_widget.dart';
+import 'alerts_page.dart'; // for onAlertsTap navigation
 
-/// Displays the main menu page with options for the user.
-class MenuPage extends StatelessWidget {
+class MenuPage extends StatefulWidget {
   final int partyId;
   final String username;
   final String password;
   final String siteName;
+  final String fullName;
+  final String email;
 
   const MenuPage({
     super.key,
@@ -15,9 +23,44 @@ class MenuPage extends StatelessWidget {
     required this.username,
     required this.password,
     required this.siteName,
+    required this.fullName,
+    required this.email,
   });
 
-  /// Builds the menu page UI.
+  @override
+  State<MenuPage> createState() => _MenuPageState();
+}
+
+class _MenuPageState extends State<MenuPage> {
+  List<String> licensedProductCodes = [];
+  bool isLoading = true;
+
+  static const productOptions = {
+    'IND_SUR': 'Indoor Surveillance',
+    'OUT_SUR': 'Outdoor Surveillance',
+    'TIM_TRA': 'Employee Time Tracking',
+    'PHA_GOV': 'Pharmacy Governance',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLicensedProducts();
+  }
+
+  Future<void> _loadLicensedProducts() async {
+    final service = GraphQLService();
+    final products = await service.getProducts(
+      siteName: widget.siteName,
+      partyId: widget.partyId,
+    );
+
+    setState(() {
+      licensedProductCodes = products ?? [];
+      isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,169 +70,223 @@ class MenuPage extends StatelessWidget {
         centerTitle: true,
         title: const Text('Menu'),
         actions: [
-          Tooltip(
-            message: 'This is your account menu.',
-            child: IconButton(
-              icon: const Icon(Icons.help_outline),
-              onPressed: () {},
-              splashRadius: 20,
-            ),
+          TopRightNavBar(
+            onAlertsTap: () {
+              // Go to Alerts
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AlertsPage(
+                    partyId: widget.partyId,
+                    username: widget.username,
+                    password: widget.password,
+                    siteName: widget.siteName,
+                  ),
+                ),
+              );
+            },
+            onPushTap: () {
+              debugPrint('Push notification tapped');
+            },
+            onMenuTap: () {
+              // Already on Menu; no-op (or show a popup if you want)
+            },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Column(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : Column(
               children: [
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
+                  child: Column(
                     children: [
-                      // Tappable Profile Header Row with background on tap
-                      InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const AccountPage()),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade900,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              CircleAvatar(radius: 28),
-                              SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Martin Nguyen',
-                                        style: TextStyle(fontSize: 18, color: Colors.white)),
-                                    Text('martin.nguyen@email.com',
-                                        style: TextStyle(color: Colors.grey)),
-                                    SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          'Action Required',
-                                          style: TextStyle(
-                                            color: Colors.blue,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        SizedBox(width: 4),
-                                        Icon(Icons.info_outline,
-                                            size: 16, color: Colors.blue),
-                                      ],
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.all(16),
+                          children: [
+                            InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AccountPage(
+                                      fullName: widget.fullName,
+                                      email: widget.email,
                                     ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade900,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    const CircleAvatar(radius: 28),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(widget.fullName,
+                                              style: const TextStyle(fontSize: 18, color: Colors.white)),
+                                          Text(widget.email,
+                                              style: const TextStyle(color: Colors.grey)),
+                                          const SizedBox(height: 4),
+                                          const Row(),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.arrow_forward_ios,
+                                        color: Colors.white70, size: 16),
                                   ],
                                 ),
                               ),
-                              Icon(Icons.arrow_forward_ios,
-                                  color: Colors.white70, size: 16),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 24),
+                            ExpansionTile(
+                              collapsedIconColor: Colors.white70,
+                              iconColor: Colors.white70,
+                              leading: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
+                              title: const Text('My Products', style: TextStyle(color: Colors.white)),
+                              children: licensedProductCodes.map((code) {
+                                final title = productOptions[code] ?? code;
+                                Widget page;
+                                switch (code) {
+                                  case 'IND_SUR':
+                                    page = IndoorSurveillancePage(
+                                      siteName: widget.siteName,
+                                      partyId: widget.partyId,
+                                      username: widget.username,
+                                      password: widget.password,
+                                      fullName: widget.fullName,
+                                      email: widget.email,
+                                    );
+                                    break;
+                                  case 'OUT_SUR':
+                                    page = OutdoorSurveillancePage(
+                                      siteName: widget.siteName,
+                                      partyId: widget.partyId,
+                                      username: widget.username,
+                                      password: widget.password,
+                                      fullName: widget.fullName,
+                                      email: widget.email,
+                                    );
+                                    break;
+                                  case 'TIM_TRA':
+                                    page = EmployeeTimeTrackingPage(
+                                      siteName: widget.siteName,
+                                      partyId: widget.partyId,
+                                      username: widget.username,
+                                      password: widget.password,
+                                      fullName: widget.fullName,
+                                      email: widget.email,
+                                    );
+                                    break;
+                                  case 'PHA_GOV':
+                                    page = PharmacyGovernancePage(
+                                      siteName: widget.siteName,
+                                      partyId: widget.partyId,
+                                      username: widget.username,
+                                      password: widget.password,
+                                      fullName: widget.fullName,
+                                      email: widget.email,
+                                    );
+                                    break;
+                                  default:
+                                    page = MyProductsPage(
+                                      siteName: widget.siteName,
+                                      partyId: widget.partyId,
+                                      username: widget.username,
+                                      password: widget.password,
+                                      fullName: widget.fullName,
+                                      email: widget.email,
+                                    );
+                                }
+
+                                return ListTile(
+                                  leading: const Icon(Icons.circle, size: 10, color: Colors.white54),
+                                  title: Text(title, style: const TextStyle(color: Colors.white)),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => page),
+                                    );
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          ],
                         ),
                       ),
-
-                      const SizedBox(height: 24),
-
-                      // My Products Line
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
-                        title: const Text('My Products',
-                            style: TextStyle(color: Colors.white)),
-                        trailing: const Icon(Icons.arrow_forward_ios,
-                            color: Colors.white70, size: 16),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MyProductsPage(
-                                partyId: partyId,
-                                username: username,
-                                password: password,
-                                siteName: siteName,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                      const Divider(color: Colors.grey),
                     ],
                   ),
                 ),
-
-                // Bottom section: divider + options
-                const Divider(color: Colors.grey),
-              ],
-            ),
-          ),
-
-          // App Version + Footer
-          Column(
-            children: [
-              const Text(
-                'App Version v4.46.6-3411',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _FooterLink(text: 'Privacy', onTap: () {}),
-                    _dotSeparator(),
-                    _FooterLink(text: 'Legal', onTap: () {}),
-                    _dotSeparator(),
-                    _FooterLink(text: 'Acknowledgments', onTap: () {}),
+                Column(
+                  children: const [
+                    Text(
+                      'App Version v4.46.6-3411',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    SizedBox(height: 8),
+                    _FooterBar(),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+              ],
+            ),
     );
   }
 }
 
-// Helper widget to create a dot separator
-Widget _dotSeparator() {
-  return const Padding(
-    padding: EdgeInsets.symmetric(horizontal: 8.0),
-    child: Text('•', style: TextStyle(color: Colors.grey)),
-  );
-}
-
-// Custom widget for footer links
-class _FooterLink extends StatelessWidget {
-  final String text;
-  final VoidCallback onTap;
-
-  const _FooterLink({required this.text, required this.onTap});
+class _FooterBar extends StatelessWidget {
+  const _FooterBar();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Text(
-        text,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          _FooterLink(text: 'Privacy', onTap: _noop),
+          _Dot(),
+          _FooterLink(text: 'Legal', onTap: _noop),
+          _Dot(),
+          _FooterLink(text: 'Acknowledgments', onTap: _noop),
+        ],
+      ),
+    );
+  }
+
+  static void _noop() {}
+}
+
+class _Dot extends StatelessWidget {
+  const _Dot();
+  @override
+  Widget build(BuildContext context) =>
+      const Padding(padding: EdgeInsets.symmetric(horizontal: 8.0),
+        child: Text('•', style: TextStyle(color: Colors.grey)));
+}
+
+class _FooterLink extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+  const _FooterLink({required this.text, required this.onTap});
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Text(text,
         style: const TextStyle(
           color: Colors.grey,
           fontSize: 12,
           decoration: TextDecoration.underline,
-        ),
-      ),
-    );
-  }
+        )),
+  );
 }

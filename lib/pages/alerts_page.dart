@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'graphql_service.dart';
 import 'detail_pages/message_detail_page.dart';
+import 'navbar_widget.dart';
 import 'menu_page.dart';
 
 const darkBackground = Color(0xFF121212);
 
-/// AlertsPage displays a list of alerts with options to filter, sort, and view details.
 class AlertsPage extends StatefulWidget {
   const AlertsPage({
     super.key,
@@ -29,6 +29,8 @@ class _AlertsPageState extends State<AlertsPage> {
   List<Map<String, dynamic>> filteredAlerts = [];
   int? selectedIndex;
   bool isLoading = true;
+  String? fullName;
+  String? email;
 
   @override
   void initState() {
@@ -36,9 +38,12 @@ class _AlertsPageState extends State<AlertsPage> {
     _fetchAlerts();
   }
 
+  String? _imageUrl(Map<String, dynamic> a) {
+    return (a['image_url'] ?? a['imageUrl'] ?? a['thumbnail'] ?? a['image'] ?? a['img'])?.toString();
+  }
+
   Future<void> _fetchAlerts() async {
     final service = GraphQLService();
-
     const fromDate = '2025-07-01T00:00:00Z';
     const toDate = '2026-08-25T23:59:59Z';
 
@@ -51,27 +56,34 @@ class _AlertsPageState extends State<AlertsPage> {
     setState(() {
       filteredAlerts = (alerts != null && alerts.isNotEmpty)
           ? alerts.map((alert) {
+              DateTime parsed = DateTime.now();
+              final created = (alert['created_at'] ?? alert['createdAt'] ?? '').toString();
+              try {
+                parsed = DateTime.parse(created.replaceFirst('+00:00', 'Z'));
+              } catch (_) {}
+
               return {
                 ...alert,
                 'title': alert['alert_type'] ?? 'Alert',
-                'preview': alert['alert_message_code'] ?? 'No message code',
+                'preview': alert['alert_message_code'] ?? alert['alert_message'] ?? 'No message',
                 'read': false,
-                'date': DateTime.tryParse(
-                      alert['created_at']?.replaceFirst(RegExp(r'\+00:00\$'), 'Z') ?? '',
-                    ) ??
-                    DateTime.now(),
+                'date': parsed,
+                'image_url': _imageUrl(alert),
               };
             }).toList()
           : [
               {
                 'title': 'No alerts found',
-                'preview': 'No alerts found between July 25 and Aug 3.',
+                'preview': 'No alerts found between the selected dates.',
                 'read': false,
                 'date': DateTime.now(),
                 'image_url': null,
               }
             ];
       isLoading = false;
+
+      fullName = widget.username;
+      email = 'unknown@email.com';
     });
   }
 
@@ -102,10 +114,7 @@ class _AlertsPageState extends State<AlertsPage> {
     if (selectedIndex != null && selectedIndex! < filteredAlerts.length - 1) {
       setState(() {
         selectedIndex = selectedIndex! + 1;
-        filteredAlerts[selectedIndex!] = {
-          ...filteredAlerts[selectedIndex!],
-          'read': true,
-        };
+        filteredAlerts[selectedIndex!] = {...filteredAlerts[selectedIndex!], 'read': true};
       });
     }
   }
@@ -114,10 +123,7 @@ class _AlertsPageState extends State<AlertsPage> {
     if (selectedIndex != null && selectedIndex! > 0) {
       setState(() {
         selectedIndex = selectedIndex! - 1;
-        filteredAlerts[selectedIndex!] = {
-          ...filteredAlerts[selectedIndex!],
-          'read': true,
-        };
+        filteredAlerts[selectedIndex!] = {...filteredAlerts[selectedIndex!], 'read': true};
       });
     }
   }
@@ -128,20 +134,42 @@ class _AlertsPageState extends State<AlertsPage> {
   }
 
   Widget _buildDetailView() {
-    return Scaffold(
-      backgroundColor: darkBackground,
-      appBar: AppBar(
-        backgroundColor: darkBackground,
-        title: const Text('Message Detail'),
-      ),
-      body: MessageDetailPage(
-        alerts: filteredAlerts,
-        currentIndex: selectedIndex!,
-        onBack: _goBack,
-        onMarkAsUnread: () => _markAsUnread(selectedIndex!),
-        onNext: _goToNextAlert,
-        onPrevious: _goToPreviousAlert,
-      ),
+    return MessageDetailPage(
+      alerts: filteredAlerts,
+      currentIndex: selectedIndex!,
+      onBack: _goBack,
+      onMarkAsUnread: () => _markAsUnread(selectedIndex!),
+      onNext: _goToNextAlert,
+      onPrevious: _goToPreviousAlert,
+      onAlertsTap: () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AlertsPage(
+              partyId: widget.partyId,
+              username: widget.username,
+              password: widget.password,
+              siteName: widget.siteName,
+            ),
+          ),
+        );
+      },
+      onPushTap: () => debugPrint('Push notification tapped'),
+      onMenuTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MenuPage(
+              partyId: widget.partyId,
+              username: widget.username,
+              password: widget.password,
+              siteName: widget.siteName,
+              fullName: fullName ?? widget.username,
+              email: email ?? 'unknown@email.com',
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -157,10 +185,8 @@ class _AlertsPageState extends State<AlertsPage> {
           onPressed: () async {
             final RenderBox button =
                 _filterKey.currentContext!.findRenderObject() as RenderBox;
-            final RenderBox overlay =
-                Overlay.of(context).context.findRenderObject() as RenderBox;
-            final Offset position =
-                button.localToGlobal(Offset.zero, ancestor: overlay);
+            final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+            final Offset position = button.localToGlobal(Offset.zero, ancestor: overlay);
 
             final RelativeRect positionRect = RelativeRect.fromLTRB(
               position.dx,
@@ -183,22 +209,24 @@ class _AlertsPageState extends State<AlertsPage> {
           tooltip: 'Sort Alerts',
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {
+          TopRightNavBar(
+            onAlertsTap: () => _sortAlerts('newest'),
+            onPushTap: () => debugPrint('Push notification tapped'),
+            onMenuTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MenuPage(
+                  builder: (_) => MenuPage(
                     partyId: widget.partyId,
                     username: widget.username,
                     password: widget.password,
                     siteName: widget.siteName,
+                    fullName: fullName ?? widget.username,
+                    email: email ?? 'unknown@email.com',
                   ),
                 ),
               );
             },
-            tooltip: 'Menu',
           ),
         ],
       ),
@@ -213,6 +241,7 @@ class _AlertsPageState extends State<AlertsPage> {
                     padding: const EdgeInsets.only(bottom: 80),
                     itemCount: filteredAlerts.length,
                     itemBuilder: (context, index) => _AlertTile(
+                      index: index,
                       alert: filteredAlerts[index],
                       onTap: () => _openDetail(index),
                     ),
@@ -223,31 +252,54 @@ class _AlertsPageState extends State<AlertsPage> {
 }
 
 class _AlertTile extends StatelessWidget {
+  final int index;
   final Map<String, dynamic> alert;
   final VoidCallback onTap;
 
-  const _AlertTile({required this.alert, required this.onTap});
+  const _AlertTile({
+    required this.index,
+    required this.alert,
+    required this.onTap,
+  });
+
+  String _date(DateTime d) => '${d.month}/${d.day}/${d.year}';
 
   @override
   Widget build(BuildContext context) {
+    final img = (alert['image_url'] as String?);
+    final heroTag = 'alert-image-$index';
+
     return ListTile(
       leading: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
-        child: alert['image_url'] != null
-            ? Image.network(
-                alert['image_url'],
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.broken_image, color: Colors.grey),
+        borderRadius: BorderRadius.circular(6),
+        child: (img != null && img.isNotEmpty)
+            ? Hero(
+                tag: heroTag,
+                child: Image.network(
+                  img,
+                  width: 56,
+                  height: 56,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.broken_image, color: Colors.grey),
+                ),
               )
-            : const Icon(Icons.image_not_supported, size: 30, color: Colors.grey),
+            : const Icon(Icons.image_not_supported, size: 28, color: Colors.grey),
       ),
-      title: Text(alert['title'], style: const TextStyle(color: Colors.white)),
-      subtitle: Text(alert['preview'], style: const TextStyle(color: Colors.white70)),
+      title: Text(
+        (alert['title'] ?? 'Alert').toString(),
+        style: const TextStyle(color: Colors.white),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        (alert['preview'] ?? '').toString(),
+        style: const TextStyle(color: Colors.white70),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       trailing: Text(
-        '${alert['date'].month}/${alert['date'].day}/${alert['date'].year}',
+        _date(alert['date'] as DateTime),
         style: const TextStyle(color: Colors.grey),
       ),
       onTap: onTap,

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 
-// This page serves as the account management section of the app
 class AccountPage extends StatelessWidget {
-  const AccountPage({super.key});
+  final String fullName;
+  final String email;
 
-  // Builds the account page UI
+  const AccountPage({super.key, required this.fullName, required this.email});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,14 +17,14 @@ class AccountPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Martin Nguyen'),
+        title: Text(fullName),
         centerTitle: true,
       ),
       body: Column(
         children: [
           const SizedBox(height: 24),
 
-          // Profile picture with profile picture icon
+          // Profile Picture
           Stack(
             alignment: Alignment.center,
             children: [
@@ -46,34 +47,6 @@ class AccountPage extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 24),
-
-          // Verify Email card
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.shade900,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListTile(
-                leading: const Icon(Icons.info_outline, color: Colors.blue),
-                title: const Text(
-                  'Verify Email',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text(
-                  'Verify your sign in email to secure your Account',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios,
-                    color: Colors.white54, size: 16),
-                onTap: () {
-                  // Implement verify email logic here
-                },
-              ),
-            ),
           ),
 
           const SizedBox(height: 24),
@@ -102,14 +75,13 @@ class AccountPage extends StatelessWidget {
             ),
           ),
 
-          // Sign Out – styled container with red on tap
+          // Sign Out
           Padding(
             padding: const EdgeInsets.only(bottom: 24.0),
             child: InkWell(
               borderRadius: BorderRadius.circular(8),
               splashColor: Colors.redAccent.withOpacity(0.3),
               onTap: () {
-                // Simulate logout
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -139,7 +111,6 @@ class AccountPage extends StatelessWidget {
   }
 }
 
-// Widget for account options
 class _AccountOption extends StatelessWidget {
   final IconData icon;
   final String label;
