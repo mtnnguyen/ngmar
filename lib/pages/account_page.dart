@@ -1,4 +1,3 @@
-// lib/pages/account_page.dart
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'personal_info_page.dart';

@@ -65,28 +65,42 @@ class MessageDetailPage extends StatelessWidget {
   String? _imageUrl(Map<String, dynamic> a) {
     final raw = (a['image_url'] ?? a['imageUrl'] ?? a['thumbnail'] ?? a['image'] ?? a['img'])?.toString();
     if (raw == null || raw.trim().isEmpty) return null;
-    final u = raw.trim();
+
+    final trimmed = raw.trim();
 
     // Absolute URL
-    if (u.startsWith('http://') || u.startsWith('https://')) {
-      if (u.contains('/images/')) {
-        final after = u.split('/images/').last;
-        final rem = after.startsWith('$siteName/') ? after.substring('$siteName/'.length) : after;
-        return '$_imageBase$rem';
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      final uri = Uri.tryParse(trimmed);
+      if (uri == null || uri.host.isEmpty) return null;
+
+      // If host is dummy or placeholder (e.g., 'your-server'), rebuild it using imageBase
+      if (uri.host.contains('your-server')) {
+        final cleanedPath = uri.path.replaceFirst('/images/', '');
+        return '$_imageBase$cleanedPath';
       }
-      return u; // leave non-/images/ absolutes alone
+
+      // If valid but points to /images/, still route through our dynamic base
+      if (uri.path.contains('/images/')) {
+        final after = uri.path.split('/images/').last;
+        final cleaned = after.startsWith('$siteName/') ? after.substring('$siteName/'.length) : after;
+        return '$_imageBase$cleaned';
+      }
+
+      // Otherwise, trust the absolute URL
+      return trimmed;
     }
 
-    // /images/...
-    if (u.startsWith('/images/')) {
-      final after = u.substring('/images/'.length);
-      final rem = after.startsWith('$siteName/') ? after.substring('$siteName/'.length) : after;
-      return '$_imageBase$rem';
+    // 2. Starts with /images/...
+    if (trimmed.startsWith('/images/')) {
+      final after = trimmed.substring('/images/'.length);
+      final cleaned = after.startsWith('$siteName/') ? after.substring('$siteName/'.length) : after;
+      return '$_imageBase$cleaned';
     }
 
-    // relative CAM_001/...
-    return '$_imageBase$u';
+    // 3. Relative CAM_001/...
+    return '$_imageBase$trimmed';
   }
+
 
   Widget _whatWeSee(Map<String, dynamic> a) {
     // Prefer objects/labels if present
@@ -113,7 +127,6 @@ class MessageDetailPage extends StatelessWidget {
   }
 
   List<Widget> _metadataRows(Map<String, dynamic> a) {
-    // No map copies, no alt_* filtering loops—just pick known keys directly.
     final pairs = <String, String>{
       'camera': (a['camera'] ?? a['source_camera'] ?? a['cam'])?.toString() ?? '',
       'location': (a['location'] ?? a['site_location'])?.toString() ?? '',
@@ -121,7 +134,7 @@ class MessageDetailPage extends StatelessWidget {
       'zone': (a['zone'] ?? a['area'])?.toString() ?? '',
       'category': (a['category'] ?? a['type'])?.toString() ?? '',
       'code': (a['code'] ?? a['alert_code'])?.toString() ?? '',
-      'id': (a['id'] ?? a['alert_id'])?.toString() ?? '',
+      // 'id': (a['id'] ?? a['alert_id'])?.toString() ?? '',  ← REMOVED
     }..removeWhere((_, v) => v.trim().isEmpty);
 
     if (pairs.isEmpty) return const [];

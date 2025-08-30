@@ -8,8 +8,6 @@ import 'graphql_service.dart';
 import 'navbar_widget.dart';
 import 'alerts_page.dart';
 import 'push_notifications_page.dart';
-
-// NEW: policy pages
 import 'privacy_screen.dart';
 import 'legal_screen.dart';
 import 'acknowledgements_screen.dart';
@@ -37,25 +35,30 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
+  final GraphQLService _service = GraphQLService();
   List<String> licensedProductCodes = [];
   bool isLoading = true;
 
-  static const Map<String, Map<String, String>> productOptions = {
+  static const productMeta = {
     'IND_SUR': {
       'title': 'Indoor Surveillance',
       'icon': 'assets/images/products/IND_SUR/green_ind.png',
+      'builder': IndoorSurveillancePage.new,
     },
     'OUT_SUR': {
       'title': 'Outdoor Surveillance',
       'icon': 'assets/images/products/OUT_SUR/green_out.png',
+      'builder': OutdoorSurveillancePage.new,
     },
     'TIM_TRA': {
       'title': 'Employee Time Tracking',
       'icon': 'assets/images/products/TIM_TRA/green_tim.png',
+      'builder': EmployeeTimeTrackingPage.new,
     },
     'PHA_GOV': {
       'title': 'Pharmacy Governance',
       'icon': 'assets/images/products/PHA_GOV/green_phar.png',
+      'builder': PharmacyGovernancePage.new,
     },
   };
 
@@ -68,8 +71,7 @@ class _MenuPageState extends State<MenuPage> {
   Future<void> _loadLicensedProducts() async {
     setState(() => isLoading = true);
     try {
-      final service = GraphQLService();
-      final products = await service.getProducts(
+      final products = await _service.getProducts(
         siteName: widget.siteName,
         partyId: widget.partyId,
       );
@@ -85,49 +87,6 @@ class _MenuPageState extends State<MenuPage> {
     }
   }
 
-  Widget? _buildProductPage(String code) {
-    switch (code) {
-      case 'IND_SUR':
-        return IndoorSurveillancePage(
-          siteName: widget.siteName,
-          partyId: widget.partyId,
-          username: widget.username,
-          password: widget.password,
-          fullName: widget.fullName,
-          email: widget.email,
-        );
-      case 'OUT_SUR':
-        return OutdoorSurveillancePage(
-          siteName: widget.siteName,
-          partyId: widget.partyId,
-          username: widget.username,
-          password: widget.password,
-          fullName: widget.fullName,
-          email: widget.email,
-        );
-      case 'TIM_TRA':
-        return EmployeeTimeTrackingPage(
-          siteName: widget.siteName,
-          partyId: widget.partyId,
-          username: widget.username,
-          password: widget.password,
-          fullName: widget.fullName,
-          email: widget.email,
-        );
-      case 'PHA_GOV':
-        return PharmacyGovernancePage(
-          siteName: widget.siteName,
-          partyId: widget.partyId,
-          username: widget.username,
-          password: widget.password,
-          fullName: widget.fullName,
-          email: widget.email,
-        );
-      default:
-        return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,94 +98,22 @@ class _MenuPageState extends State<MenuPage> {
         title: const Text('Menu'),
         actions: [
           TopRightNavBar(
-            onAlertsTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AlertsPage(
-                    partyId: widget.partyId,
-                    username: widget.username,
-                    password: widget.password,
-                    siteName: widget.siteName,
-                    fullName: widget.fullName,
-                    email: widget.email,
-                  ),
-                ),
-              );
-            },
-            onPushTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PushNotificationsPage(
-                    partyId: widget.partyId,
-                    username: widget.username,
-                    password: widget.password,
-                    siteName: widget.siteName,
-                    fullName: widget.fullName,
-                    email: widget.email,
-                  ),
-                ),
-              );
-            },
+            onAlertsTap: () => _navigateTo(context, AlertsPage.new),
+            onPushTap: () => _navigateTo(context, PushNotificationsPage.new),
             onMenuTap: () {},
           ),
         ],
       ),
-
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : RefreshIndicator(
               color: Colors.white,
               onRefresh: _loadLicensedProducts,
               child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
-                  InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AccountPage(
-                            fullName: widget.fullName,
-                            email: widget.email,
-                            partyId: widget.partyId,
-                            username: widget.username,
-                            password: widget.password,
-                            siteName: widget.siteName,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade900,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const CircleAvatar(radius: 28),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(widget.fullName,
-                                    style: const TextStyle(fontSize: 18, color: Colors.white)),
-                                Text(widget.email, style: const TextStyle(color: Colors.grey)),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildAccountTile(),
                   const SizedBox(height: 24),
-
                   ExpansionTile(
                     collapsedIconColor: Colors.white70,
                     iconColor: Colors.white70,
@@ -234,12 +121,10 @@ class _MenuPageState extends State<MenuPage> {
                     title: const Text('My Products', style: TextStyle(color: Colors.white)),
                     children: _buildProductTiles(),
                   ),
-
                   const SizedBox(height: 24),
                 ],
               ),
             ),
-
       bottomNavigationBar: SafeArea(
         top: false,
         child: Column(
@@ -247,58 +132,59 @@ class _MenuPageState extends State<MenuPage> {
           children: [
             const Divider(color: Colors.grey),
             const SizedBox(height: 8),
-            const Text(
-              'App Version v4.46.6-3411',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
+            const Text('App Version v4.46.6-3411', style: TextStyle(color: Colors.grey, fontSize: 12)),
             const SizedBox(height: 8),
             _FooterBar(
-              onPrivacy: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PrivacyScreen(
-                      partyId: widget.partyId,
-                      username: widget.username,
-                      password: widget.password,
-                      siteName: widget.siteName,
-                      fullName: widget.fullName,
-                      email: widget.email,
-                    ),
-                  ),
-                );
-              },
-              onLegal: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => LegalScreen(
-                      partyId: widget.partyId,
-                      username: widget.username,
-                      password: widget.password,
-                      siteName: widget.siteName,
-                      fullName: widget.fullName,
-                      email: widget.email,
-                    ),
-                  ),
-                );
-              },
-              onAcknowledgements: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AcknowledgementsScreen(
-                      partyId: widget.partyId,
-                      username: widget.username,
-                      password: widget.password,
-                      siteName: widget.siteName,
-                      fullName: widget.fullName,
-                      email: widget.email,
-                    ),
-                  ),
-                );
-              },
+              onPrivacy: () => _navigateTo(context, PrivacyScreen.new),
+              onLegal: () => _navigateTo(context, LegalScreen.new),
+              onAcknowledgements: () => _navigateTo(context, AcknowledgementsScreen.new),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateTo(BuildContext context, Widget Function({required int partyId, required String username, required String password, required String siteName, required String fullName, required String email}) builder) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => builder(
+          partyId: widget.partyId,
+          username: widget.username,
+          password: widget.password,
+          siteName: widget.siteName,
+          fullName: widget.fullName,
+          email: widget.email,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccountTile() {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => _navigateTo(context, AccountPage.new),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade900,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const CircleAvatar(radius: 28),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.fullName, style: const TextStyle(fontSize: 18, color: Colors.white)),
+                  Text(widget.email, style: const TextStyle(color: Colors.grey)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
           ],
         ),
       ),
@@ -316,19 +202,17 @@ class _MenuPageState extends State<MenuPage> {
     }
 
     return licensedProductCodes.map((code) {
-      final meta = productOptions[code];
-      final title = meta?['title'] ?? code;
-      final iconPath = meta?['icon'];
+      final meta = productMeta[code];
+      if (meta == null) return const SizedBox.shrink();
 
-      final page = _buildProductPage(code);
-      if (page == null) return const SizedBox.shrink();
+      final title = meta['title'] as String;
+      final icon = meta['icon'] as String;
+      final builder = meta['builder'] as Widget Function({required int partyId, required String username, required String password, required String siteName, required String fullName, required String email});
 
       return ListTile(
-        leading: (iconPath != null && iconPath.isNotEmpty)
-            ? Image.asset(iconPath, height: 28)
-            : const Icon(Icons.circle, size: 10, color: Colors.white54),
+        leading: Image.asset(icon, height: 28),
         title: Text(title, style: const TextStyle(color: Colors.white)),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
+        onTap: () => _navigateTo(context, builder),
       );
     }).toList();
   }

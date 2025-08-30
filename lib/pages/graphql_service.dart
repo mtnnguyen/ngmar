@@ -23,6 +23,7 @@ class GraphQLService {
   String? _authToken;
   void setAuthToken(String token) => _authToken = token;
 
+  /// Internal helper to post GraphQL requests with API key and optional auth token
   Future<Map<String, dynamic>> _post({
     required String url,
     required String apiKey,
@@ -71,6 +72,7 @@ class GraphQLService {
     }
   }
 
+  /// Calls the signin mutation and returns user info and error code
   Future<Map<String, dynamic>?> signin(String username, String password, String siteName) async {
     const query = r'''
       mutation ($user_name: String!, $password: String!, $site_name: String!) {
@@ -81,7 +83,6 @@ class GraphQLService {
       }
     ''';
 
-    print('[GraphQLService:signin] user=$username site=$siteName');
     try {
       final data = await _post(
         url: _signinUrl,
@@ -100,6 +101,7 @@ class GraphQLService {
     }
   }
 
+  /// Registers a new user via signup mutation
   Future<Map<String, dynamic>?> signup(Map<String, dynamic> party, String siteName) async {
     const query = r'''
       mutation Signup($party: PartyInput!, $site_name: String!) {
@@ -109,7 +111,6 @@ class GraphQLService {
       }
     ''';
 
-    print('[GraphQLService:signup] party=$party');
     try {
       final data = await _post(
         url: _signupUrl,
@@ -127,6 +128,7 @@ class GraphQLService {
     }
   }
 
+  /// Fetches recent alerts for the given site and date range
   Future<List<Map<String, dynamic>>?> getAlerts({
     required String siteName,
     required String fromDate,
@@ -152,7 +154,6 @@ class GraphQLService {
       }
     ''';
 
-    print('[GraphQLService:getAlerts] site=$siteName');
     try {
       final data = await _post(
         url: _alertsUrl,
@@ -172,6 +173,7 @@ class GraphQLService {
     }
   }
 
+  /// Retrieves the list of licensed product codes for a user/site
   Future<List<String>> getProducts({
     required String siteName,
     required int partyId,
@@ -184,7 +186,6 @@ class GraphQLService {
       }
     ''';
 
-    print('[GraphQLService:getProducts] site=$siteName partyId=$partyId');
     try {
       final data = await _post(
         url: _productsUrl,
@@ -197,10 +198,7 @@ class GraphQLService {
       );
 
       final raw = data['getProducts'];
-      if (raw is! List) {
-        print('[GraphQLService:getProducts] Unexpected shape: $raw');
-        return <String>[];
-      }
+      if (raw is! List) return <String>[];
 
       return raw
           .map((e) => (e as Map<String, dynamic>)['product_code']?.toString())
@@ -212,6 +210,7 @@ class GraphQLService {
     }
   }
 
+  /// Fetches status values for a product; includes worst flag and all individual status entries
   Future<Map<String, dynamic>?> getProductStatus({
     required String siteName,
     required int partyId,
@@ -228,7 +227,6 @@ class GraphQLService {
       }
     ''';
 
-    print('[GraphQLService:getProductStatus] code=$productCode');
     try {
       final data = await _post(
         url: _productStatusUrl,
@@ -243,27 +241,23 @@ class GraphQLService {
 
       final raw = data['getProductStatus'];
       if (raw is List && raw.isNotEmpty) {
-        print('[GraphQLService:getProductStatus] $raw');
-
-        // Extract all the flags
         final flags = raw.map((item) {
           final f = item['product_status_flag'];
           return f is int ? f : int.tryParse('$f') ?? 0;
         }).toList();
 
-        // Determine worst-case (max) flag: 0=green, 1=yellow, 2=red
-        final worstFlag = flags.isNotEmpty ? flags.reduce((a, b) => a > b ? a : b) : 0;
+        final worstFlag = flags.reduce((a, b) => a > b ? a : b);
 
         return {
-          'product_status_flag': worstFlag, // This is what your UI uses to decide image color
+          'product_status_flag': worstFlag,
           'statuses': raw.map((item) => {
             'product_status_name': item['product_status_name'],
             'product_status_value': item['product_status_value'],
+            'product_status_flag': item['product_status_flag'],
           }).toList(),
         };
       }
 
-      print('[GraphQLService:getProductStatus] Unexpected format: $raw');
       return null;
     } catch (e) {
       print('[GraphQLService:getProductStatus] $e');
