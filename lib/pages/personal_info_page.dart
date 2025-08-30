@@ -4,7 +4,11 @@ class PersonalInfoPage extends StatelessWidget {
   final String fullName;
   final String email;
 
-  const PersonalInfoPage({super.key, required this.fullName, required this.email});
+  const PersonalInfoPage({
+    super.key,
+    required this.fullName,
+    required this.email,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +21,7 @@ class PersonalInfoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _infoTile("Full Name", fullName),
+          _infoTile("User Name", fullName),
           const Divider(color: Colors.white10),
           _infoTile("Email", email),
           const Divider(color: Colors.white10),

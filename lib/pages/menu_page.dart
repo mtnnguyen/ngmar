@@ -149,7 +149,7 @@ class _MenuPageState extends State<MenuPage> {
           children: [
             const Divider(color: Colors.grey),
             const SizedBox(height: 8),
-            const Text('App Version v4.46.6-3411', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            const Text('App Version v1.0.0', style: TextStyle(color: Colors.grey, fontSize: 12)),
             const SizedBox(height: 8),
             _FooterBar(
               onPrivacy: () => _navigateTo(context, PrivacyScreen.new),

@@ -88,7 +88,7 @@ class AccountPage extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 24.0),
             child: InkWell(
               borderRadius: BorderRadius.circular(8),
-              splashColor: Colors.redAccent.withOpacity(0.3),
+              splashColor: Colors.greenAccent.withOpacity(0.3),
               onTap: () {
                 Navigator.pushAndRemoveUntil(
                   context,
@@ -99,14 +99,14 @@ class AccountPage extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade900,
+                  color: Colors.green,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
                   'Sign Out',
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),
                 ),

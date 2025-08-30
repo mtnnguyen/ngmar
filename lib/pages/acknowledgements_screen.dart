@@ -11,6 +11,7 @@ class AcknowledgementsScreen extends StatelessWidget {
   final String siteName;
   final String fullName;
   final String email;
+  final bool showNavBar;
 
   const AcknowledgementsScreen({
     super.key,
@@ -20,6 +21,7 @@ class AcknowledgementsScreen extends StatelessWidget {
     required this.siteName,
     required this.fullName,
     required this.email,
+    this.showNavBar = true, // toggle nav bar (hide when launched from Login)
   });
 
   static const bg = Color(0xFF121212);
@@ -32,55 +34,57 @@ class AcknowledgementsScreen extends StatelessWidget {
         backgroundColor: bg,
         centerTitle: true,
         title: const Text('Acknowledgments'),
-        actions: [
-          TopRightNavBar(
-            onAlertsTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AlertsPage(
-                    partyId: partyId,
-                    username: username,
-                    password: password,
-                    siteName: siteName,
-                    fullName: fullName,
-                    email: email,
-                  ),
+        actions: (showNavBar && partyId > 0)
+            ? [
+                TopRightNavBar(
+                  onAlertsTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AlertsPage(
+                          partyId: partyId,
+                          username: username,
+                          password: password,
+                          siteName: siteName,
+                          fullName: fullName,
+                          email: email,
+                        ),
+                      ),
+                    );
+                  },
+                  onPushTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PushNotificationsPage(
+                          partyId: partyId,
+                          username: username,
+                          password: password,
+                          siteName: siteName,
+                          fullName: fullName,
+                          email: email,
+                        ),
+                      ),
+                    );
+                  },
+                  onMenuTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MenuPage(
+                          partyId: partyId,
+                          username: username,
+                          password: password,
+                          siteName: siteName,
+                          fullName: fullName,
+                          email: email,
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-            onPushTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PushNotificationsPage(
-                    partyId: partyId,
-                    username: username,
-                    password: password,
-                    siteName: siteName,
-                    fullName: fullName,
-                    email: email,
-                  ),
-                ),
-              );
-            },
-            onMenuTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => MenuPage(
-                    partyId: partyId,
-                    username: username,
-                    password: password,
-                    siteName: siteName,
-                    fullName: fullName,
-                    email: email,
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+              ]
+            : null,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

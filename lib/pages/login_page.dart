@@ -67,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
     final siteName = _siteController.text.trim().isNotEmpty
-        ? _siteController.text.trim()
+        ? _siteController.text.trim().toUpperCase()
         : 'TEST_SITE';
 
     try {
@@ -236,7 +236,7 @@ class _LoginPageState extends State<LoginPage> {
                               final username = _usernameController.text.trim();
                               final password = _passwordController.text.trim();
                               final siteName = _siteController.text.trim().isNotEmpty
-                                  ? _siteController.text.trim()
+                                  ? _siteController.text.trim().toUpperCase() // 👈 uppercase
                                   : 'TEST_SITE';
                               Navigator.pushNamed(
                                 context,
@@ -245,9 +245,10 @@ class _LoginPageState extends State<LoginPage> {
                                   'username': username,
                                   'password': password,
                                   'siteName': siteName,
-                                  'partyId': _latestPartyId,
+                                  'partyId': _latestPartyId, // remains 0 before login
                                   'fullName': _latestFullName,
                                   'email': _latestEmail,
+                                  'showNavBar': false
                                 },
                               );
                             },
@@ -262,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
                               final username = _usernameController.text.trim();
                               final password = _passwordController.text.trim();
                               final siteName = _siteController.text.trim().isNotEmpty
-                                  ? _siteController.text.trim()
+                                  ? _siteController.text.trim().toUpperCase() // 👈 uppercase
                                   : 'TEST_SITE';
                               Navigator.pushNamed(
                                 context,
@@ -274,6 +275,7 @@ class _LoginPageState extends State<LoginPage> {
                                   'partyId': _latestPartyId,
                                   'fullName': _latestFullName,
                                   'email': _latestEmail,
+                                  'showNavBar': false
                                 },
                               );
                             },
@@ -288,7 +290,7 @@ class _LoginPageState extends State<LoginPage> {
                               final username = _usernameController.text.trim();
                               final password = _passwordController.text.trim();
                               final siteName = _siteController.text.trim().isNotEmpty
-                                  ? _siteController.text.trim()
+                                  ? _siteController.text.trim().toUpperCase() // 👈 uppercase
                                   : 'TEST_SITE';
                               Navigator.pushNamed(
                                 context,
@@ -300,6 +302,7 @@ class _LoginPageState extends State<LoginPage> {
                                   'partyId': _latestPartyId,
                                   'fullName': _latestFullName,
                                   'email': _latestEmail,
+                                  'showNavBar': false
                                 },
                               );
                             },

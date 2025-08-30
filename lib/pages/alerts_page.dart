@@ -40,6 +40,9 @@ class _AlertsPageState extends State<AlertsPage> {
 
   final String imageHost = kDefaultImageHost;
 
+  // 🔑 Added: key to anchor the popup menu under the filter icon
+  final GlobalKey _filterKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -107,11 +110,25 @@ class _AlertsPageState extends State<AlertsPage> {
         centerTitle: true,
         title: const Text('Alerts'),
         leading: IconButton(
+          key: _filterKey, // 🔑 anchor for the popup
           icon: const Icon(Icons.filter_list),
           onPressed: () async {
+            // Compute a RelativeRect that matches the icon's position,
+            // so the menu opens directly under it.
+            final box = _filterKey.currentContext!.findRenderObject() as RenderBox;
+            final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+            final position = RelativeRect.fromRect(
+              Rect.fromPoints(
+                box.localToGlobal(Offset.zero, ancestor: overlay),
+                box.localToGlobal(box.size.bottomRight(Offset.zero), ancestor: overlay),
+              ),
+              Offset.zero & overlay.size,
+            );
+
             final selected = await showMenu<String>(
               context: context,
-              position: RelativeRect.fromLTRB(80, 80, 0, 0),
+              position: position,
               items: const [
                 PopupMenuItem(value: 'newest', child: Text('Newest to Oldest')),
                 PopupMenuItem(value: 'oldest', child: Text('Oldest to Newest')),
