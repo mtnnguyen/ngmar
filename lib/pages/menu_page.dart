@@ -37,27 +37,28 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> {
   final GraphQLService _service = GraphQLService();
   List<String> licensedProductCodes = [];
+  Map<String, int> productFlags = {};
   bool isLoading = true;
 
   static const productMeta = {
     'IND_SUR': {
       'title': 'Indoor Surveillance',
-      'icon': 'assets/images/products/IND_SUR/green_ind.png',
+      'prefix': 'ind',
       'builder': IndoorSurveillancePage.new,
     },
     'OUT_SUR': {
       'title': 'Outdoor Surveillance',
-      'icon': 'assets/images/products/OUT_SUR/green_out.png',
+      'prefix': 'out',
       'builder': OutdoorSurveillancePage.new,
     },
     'TIM_TRA': {
       'title': 'Employee Time Tracking',
-      'icon': 'assets/images/products/TIM_TRA/green_tim.png',
+      'prefix': 'tim',
       'builder': EmployeeTimeTrackingPage.new,
     },
     'PHA_GOV': {
       'title': 'Pharmacy Governance',
-      'icon': 'assets/images/products/PHA_GOV/green_phar.png',
+      'prefix': 'phar',
       'builder': PharmacyGovernancePage.new,
     },
   };
@@ -76,7 +77,23 @@ class _MenuPageState extends State<MenuPage> {
         partyId: widget.partyId,
       );
       if (!mounted) return;
-      setState(() => licensedProductCodes = products ?? []);
+      licensedProductCodes = products ?? [];
+
+      // Fetch status for each product
+      final flags = <String, int>{};
+      for (final code in licensedProductCodes) {
+        final status = await _service.getProductStatus(
+          siteName: widget.siteName,
+          partyId: widget.partyId,
+          productCode: code,
+        );
+        if (status != null) {
+          flags[code] = status['product_status_flag'] ?? 0;
+        }
+      }
+
+      if (!mounted) return;
+      setState(() => productFlags = flags);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -206,11 +223,15 @@ class _MenuPageState extends State<MenuPage> {
       if (meta == null) return const SizedBox.shrink();
 
       final title = meta['title'] as String;
-      final icon = meta['icon'] as String;
+      final prefix = meta['prefix'] as String;
       final builder = meta['builder'] as Widget Function({required int partyId, required String username, required String password, required String siteName, required String fullName, required String email});
 
+      final flag = productFlags[code] ?? 0;
+      final color = flag == 1 ? 'yellow' : flag == 2 ? 'red' : 'green';
+      final iconPath = 'assets/images/products/$code/${color}_$prefix.png';
+
       return ListTile(
-        leading: Image.asset(icon, height: 28),
+        leading: Image.asset(iconPath, height: 28),
         title: Text(title, style: const TextStyle(color: Colors.white)),
         onTap: () => _navigateTo(context, builder),
       );
