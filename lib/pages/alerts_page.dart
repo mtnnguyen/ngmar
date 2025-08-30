@@ -110,7 +110,7 @@ class _AlertsPageState extends State<AlertsPage> {
         centerTitle: true,
         title: const Text('Alerts'),
         leading: IconButton(
-          key: _filterKey, // 🔑 anchor for the popup
+          key: _filterKey,
           icon: const Icon(Icons.filter_list),
           onPressed: () async {
             // Compute a RelativeRect that matches the icon's position,
