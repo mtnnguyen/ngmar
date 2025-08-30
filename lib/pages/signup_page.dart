@@ -58,8 +58,7 @@ class _SignUpPageState extends State<SignUpPage> {
               const SizedBox(height: 30),
 
               // Editable Site field (dynamic like others)
-              _buildInputField('Site', _siteController, hintText: 'TEST_SITE'),
-
+              _buildInputField('Site', _siteController, hintText: 'testsite'),
               _buildInputField('User name', _usernameController, hintText: 'JohnDoe123'),
               _buildInputField('Password', _passwordController, obscure: true, hintText: '••••••••'),
               _buildInputField('First Name', _firstNameController, hintText: 'John'),

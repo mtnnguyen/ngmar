@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-
 import 'graphql_service.dart';
 import 'alerts_page.dart';
 
@@ -15,13 +14,16 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _siteController = TextEditingController(); // ✅ new controller for site
+  final _siteController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
 
   final GraphQLService _service = GraphQLService();
 
-  /// Robustly extract partyId from various possible API response structures.
+  int _latestPartyId = 0;
+  String _latestFullName = 'User';
+  String _latestEmail = 'no-email@domain.com';
+
   int _extractPartyId(dynamic data) {
     final candidates = [
       data?['party_id'],
@@ -42,7 +44,6 @@ class _LoginPageState extends State<LoginPage> {
     throw StateError('partyId not found in sign-in response');
   }
 
-  /// Extracts full name and email from the API response.
   Map<String, String> _extractUserInfo(dynamic user) {
     final fullName = user['full_name'] ??
         user['name'] ??
@@ -67,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
     final password = _passwordController.text.trim();
     final siteName = _siteController.text.trim().isNotEmpty
         ? _siteController.text.trim()
-        : 'TEST_SITE'; // ✅ fallback if empty
+        : 'TEST_SITE';
 
     try {
       final data = await _service.signin(username, password, siteName);
@@ -82,13 +83,16 @@ class _LoginPageState extends State<LoginPage> {
       if (data['error_code'] == null) {
         final partyId = _extractPartyId(data);
         final user = data['party'] ?? data['user'] ?? {};
-
         final userInfo = _extractUserInfo(user);
         final fullName = userInfo['fullName']!;
         final email = userInfo['email']!;
 
         debugPrint(
             'Signed in as: $fullName <$email> | partyId=$partyId | site=$siteName');
+
+        _latestPartyId = partyId;
+        _latestFullName = fullName;
+        _latestEmail = email;
 
         if (!mounted) return;
 
@@ -107,12 +111,12 @@ class _LoginPageState extends State<LoginPage> {
         );
       } else {
         setState(() {
-          _errorMessage = "Login failed. Error code: ${data['error_code']}";
+          _errorMessage = "Login failed. Error code: \${data['error_code']}";
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Sign-in failed: $e';
+        _errorMessage = 'Sign-in failed: \$e';
       });
     } finally {
       if (mounted) {
@@ -151,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Image.asset('assets/images/logo.png', height: 100),
                       const SizedBox(height: 40),
-                      _buildInputField('Site', _siteController), // ✅ site input
+                      _buildInputField('Site', _siteController),
                       _buildInputField('User name', _usernameController),
                       _buildInputField('Password', _passwordController,
                           obscure: true),
@@ -161,8 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Text(
                               _errorMessage!,
-                              style:
-                                  const TextStyle(color: Colors.redAccent),
+                              style: const TextStyle(color: Colors.redAccent),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 12),
@@ -213,29 +216,98 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 16),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
               child: Column(
                 children: [
-                  Divider(color: Colors.white30),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Privacy',
-                          style: TextStyle(
-                              color: Colors.white60, fontSize: 12)),
-                      SizedBox(width: 16),
-                      Text('Legal',
-                          style: TextStyle(
-                              color: Colors.white60, fontSize: 12)),
-                      SizedBox(width: 16),
-                      Text('Acknowledgements',
-                          style: TextStyle(
-                              color: Colors.white60, fontSize: 12)),
-                    ],
+                  const Divider(color: Colors.white30),
+                  const SizedBox(height: 8),
+                  RichText(
+                    text: TextSpan(
+                      style:
+                          const TextStyle(color: Colors.white60, fontSize: 12),
+                      children: [
+                        TextSpan(
+                          text: 'Privacy',
+                          style: const TextStyle(
+                              decoration: TextDecoration.underline),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              final username = _usernameController.text.trim();
+                              final password = _passwordController.text.trim();
+                              final siteName = _siteController.text.trim().isNotEmpty
+                                  ? _siteController.text.trim()
+                                  : 'TEST_SITE';
+                              Navigator.pushNamed(
+                                context,
+                                '/privacy',
+                                arguments: {
+                                  'username': username,
+                                  'password': password,
+                                  'siteName': siteName,
+                                  'partyId': _latestPartyId,
+                                  'fullName': _latestFullName,
+                                  'email': _latestEmail,
+                                },
+                              );
+                            },
+                        ),
+                        const TextSpan(text: '   •   '),
+                        TextSpan(
+                          text: 'Legal',
+                          style: const TextStyle(
+                              decoration: TextDecoration.underline),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              final username = _usernameController.text.trim();
+                              final password = _passwordController.text.trim();
+                              final siteName = _siteController.text.trim().isNotEmpty
+                                  ? _siteController.text.trim()
+                                  : 'TEST_SITE';
+                              Navigator.pushNamed(
+                                context,
+                                '/legal',
+                                arguments: {
+                                  'username': username,
+                                  'password': password,
+                                  'siteName': siteName,
+                                  'partyId': _latestPartyId,
+                                  'fullName': _latestFullName,
+                                  'email': _latestEmail,
+                                },
+                              );
+                            },
+                        ),
+                        const TextSpan(text: '   •   '),
+                        TextSpan(
+                          text: 'Acknowledgements',
+                          style: const TextStyle(
+                              decoration: TextDecoration.underline),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              final username = _usernameController.text.trim();
+                              final password = _passwordController.text.trim();
+                              final siteName = _siteController.text.trim().isNotEmpty
+                                  ? _siteController.text.trim()
+                                  : 'TEST_SITE';
+                              Navigator.pushNamed(
+                                context,
+                                '/acknowledgements',
+                                arguments: {
+                                  'username': username,
+                                  'password': password,
+                                  'siteName': siteName,
+                                  'partyId': _latestPartyId,
+                                  'fullName': _latestFullName,
+                                  'email': _latestEmail,
+                                },
+                              );
+                            },
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),

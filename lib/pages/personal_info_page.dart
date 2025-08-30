@@ -1,4 +1,3 @@
-// lib/pages/personal_info_page.dart
 import 'package:flutter/material.dart';
 
 class PersonalInfoPage extends StatelessWidget {

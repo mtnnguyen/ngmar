@@ -161,8 +161,6 @@ class _AlertsPageState extends State<AlertsPage> {
                             currentIndex: i,
                             onBack: () => Navigator.pop(context),
                             onMarkAsUnread: () {},
-                            onNext: () {},
-                            onPrevious: () {},
                             onAlertsTap: () {},
                             onPushTap: () {},
                             onMenuTap: () {},

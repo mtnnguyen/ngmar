@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-
 import 'pages/alerts_page.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';
-import 'widgets/bottom_nav_bar.dart';
+import 'pages/privacy_screen.dart';
+import 'pages/legal_screen.dart';
+import 'pages/acknowledgements_screen.dart';
 
 const darkBackground = Color(0xFF121212);
 
@@ -42,21 +43,60 @@ class InboxApp extends StatelessWidget {
           '/signup': (context) => const SignUpPage(),
         },
         onGenerateRoute: (settings) {
-          if (settings.name == '/home') {
-            final args = settings.arguments;
-            if (args is Map<String, dynamic>) {
-              return MaterialPageRoute(
-                builder: (_) => HomePage(
-                  username: args['username'],
-                  password: args['password'],
-                  siteName: args['siteName'],
-                  partyId: args['partyId'],
-                  fullName: args['fullName'] ?? args['username'],
-                  email: args['email'] ?? '',
-                ),
-              );
-            }
+          final args = settings.arguments;
+
+          if (settings.name == '/home' && args is Map<String, dynamic>) {
+            return MaterialPageRoute(
+              builder: (_) => HomePage(
+                username: args['username'],
+                password: args['password'],
+                siteName: args['siteName'],
+                partyId: args['partyId'],
+                fullName: args['fullName'] ?? args['username'],
+                email: args['email'] ?? '',
+              ),
+            );
           }
+
+          if (settings.name == '/privacy' && args is Map<String, dynamic>) {
+            return MaterialPageRoute(
+              builder: (_) => PrivacyScreen(
+                partyId: args['partyId'],
+                username: args['username'],
+                password: args['password'],
+                siteName: args['siteName'],
+                fullName: args['fullName'] ?? args['username'],
+                email: args['email'] ?? '',
+              ),
+            );
+          }
+
+          if (settings.name == '/legal' && args is Map<String, dynamic>) {
+            return MaterialPageRoute(
+              builder: (_) => LegalScreen(
+                partyId: args['partyId'],
+                username: args['username'],
+                password: args['password'],
+                siteName: args['siteName'],
+                fullName: args['fullName'] ?? args['username'],
+                email: args['email'] ?? '',
+              ),
+            );
+          }
+
+          if (settings.name == '/acknowledgements' && args is Map<String, dynamic>) {
+            return MaterialPageRoute(
+              builder: (_) => AcknowledgementsScreen(
+                partyId: args['partyId'],
+                username: args['username'],
+                password: args['password'],
+                siteName: args['siteName'],
+                fullName: args['fullName'] ?? args['username'],
+                email: args['email'] ?? '',
+              ),
+            );
+          }
+
           return null;
         },
       ),
@@ -116,10 +156,6 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: darkBackground,
       body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
     );
   }
 }

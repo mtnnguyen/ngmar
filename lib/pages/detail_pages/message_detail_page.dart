@@ -3,18 +3,14 @@ import 'package:flutter/material.dart';
 const darkBackground = Color(0xFF121212);
 const String kDefaultImageHost = 'http://35.182.97.114';
 
-class MessageDetailPage extends StatelessWidget {
+class MessageDetailPage extends StatefulWidget {
   final List<Map<String, dynamic>> alerts;
   final int currentIndex;
   final VoidCallback onBack;
-  // Kept for caller compatibility; not used in UI.
   final VoidCallback onMarkAsUnread;
-  final VoidCallback onNext;
-  final VoidCallback onPrevious;
   final VoidCallback onAlertsTap;
   final VoidCallback onPushTap;
   final VoidCallback onMenuTap;
-
   final String siteName;
   final String imageHost;
 
@@ -24,8 +20,6 @@ class MessageDetailPage extends StatelessWidget {
     required this.currentIndex,
     required this.onBack,
     required this.onMarkAsUnread,
-    required this.onNext,
-    required this.onPrevious,
     required this.onAlertsTap,
     required this.onPushTap,
     required this.onMenuTap,
@@ -33,7 +27,36 @@ class MessageDetailPage extends StatelessWidget {
     this.imageHost = kDefaultImageHost,
   });
 
-  Map<String, dynamic> get _alert => alerts[currentIndex];
+  @override
+  State<MessageDetailPage> createState() => _MessageDetailPageState();
+}
+
+class _MessageDetailPageState extends State<MessageDetailPage> {
+  late int currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.currentIndex;
+  }
+
+  void _goNext() {
+    if (currentIndex < widget.alerts.length - 1) {
+      setState(() {
+        currentIndex++;
+      });
+    }
+  }
+
+  void _goPrevious() {
+    if (currentIndex > 0) {
+      setState(() {
+        currentIndex--;
+      });
+    }
+  }
+
+  Map<String, dynamic> get _alert => widget.alerts[currentIndex];
 
   String _formatDateTime(DateTime d) {
     final two = (int n) => n.toString().padLeft(2, '0');
@@ -50,15 +73,19 @@ class MessageDetailPage extends StatelessWidget {
       return DateTime.fromMillisecondsSinceEpoch(isMs ? v : v * 1000, isUtc: true).toLocal();
     }
     if (v is String) {
-      try { return DateTime.parse(v).toLocal(); } catch (_) {}
-      try { return DateTime.parse(v.replaceAll(' ', 'T')).toLocal(); } catch (_) {}
+      try {
+        return DateTime.parse(v).toLocal();
+      } catch (_) {}
+      try {
+        return DateTime.parse(v.replaceAll(' ', 'T')).toLocal();
+      } catch (_) {}
     }
     return DateTime.now();
   }
 
   String get _imageBase {
-    final host = imageHost.endsWith('/') ? imageHost.substring(0, imageHost.length - 1) : imageHost;
-    final site = siteName.trim().replaceAll(RegExp(r'^/+|/+$'), '');
+    final host = widget.imageHost.endsWith('/') ? widget.imageHost.substring(0, widget.imageHost.length - 1) : widget.imageHost;
+    final site = widget.siteName.trim().replaceAll(RegExp(r'^/+|/+$'), '');
     return '$host/images/$site/';
   }
 
@@ -67,54 +94,49 @@ class MessageDetailPage extends StatelessWidget {
     if (raw == null || raw.trim().isEmpty) return null;
 
     final trimmed = raw.trim();
-
-    // Absolute URL
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       final uri = Uri.tryParse(trimmed);
       if (uri == null || uri.host.isEmpty) return null;
 
-      // If host is dummy or placeholder (e.g., 'your-server'), rebuild it using imageBase
       if (uri.host.contains('your-server')) {
         final cleanedPath = uri.path.replaceFirst('/images/', '');
         return '$_imageBase$cleanedPath';
       }
 
-      // If valid but points to /images/, still route through our dynamic base
       if (uri.path.contains('/images/')) {
         final after = uri.path.split('/images/').last;
-        final cleaned = after.startsWith('$siteName/') ? after.substring('$siteName/'.length) : after;
+        final cleaned = after.startsWith('${widget.siteName}/') ? after.substring('${widget.siteName}/'.length) : after;
         return '$_imageBase$cleaned';
       }
 
-      // Otherwise, trust the absolute URL
       return trimmed;
     }
 
-    // 2. Starts with /images/...
     if (trimmed.startsWith('/images/')) {
       final after = trimmed.substring('/images/'.length);
-      final cleaned = after.startsWith('$siteName/') ? after.substring('$siteName/'.length) : after;
+      final cleaned = after.startsWith('${widget.siteName}/') ? after.substring('${widget.siteName}/'.length) : after;
       return '$_imageBase$cleaned';
     }
 
-    // 3. Relative CAM_001/...
     return '$_imageBase$trimmed';
   }
 
-
   Widget _whatWeSee(Map<String, dynamic> a) {
-    // Prefer objects/labels if present
     List<String>? toStrList(dynamic v) =>
         v is List ? v.map((e) => e?.toString() ?? '').where((s) => s.isNotEmpty).cast<String>().toList() : null;
 
     final items = (toStrList(a['objects']) ?? toStrList(a['labels'])) ?? const [];
     if (items.isNotEmpty) {
       return Wrap(
-        spacing: 8, runSpacing: 8,
-        children: items.map((s) => Chip(
-          label: Text(s, style: const TextStyle(color: Colors.white)),
-          backgroundColor: const Color(0xFF1F1F1F), side: BorderSide.none,
-        )).toList(),
+        spacing: 8,
+        runSpacing: 8,
+        children: items
+            .map((s) => Chip(
+                  label: Text(s, style: const TextStyle(color: Colors.white)),
+                  backgroundColor: const Color(0xFF1F1F1F),
+                  side: BorderSide.none,
+                ))
+            .toList(),
       );
     }
 
@@ -134,25 +156,26 @@ class MessageDetailPage extends StatelessWidget {
       'zone': (a['zone'] ?? a['area'])?.toString() ?? '',
       'category': (a['category'] ?? a['type'])?.toString() ?? '',
       'code': (a['code'] ?? a['alert_code'])?.toString() ?? '',
-      // 'id': (a['id'] ?? a['alert_id'])?.toString() ?? '',  ← REMOVED
     }..removeWhere((_, v) => v.trim().isEmpty);
 
-    if (pairs.isEmpty) return const [];
-
-    return pairs.entries.map((e) => Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            decoration: BoxDecoration(color: const Color(0xFF1F1F1F), borderRadius: BorderRadius.circular(6)),
-            child: Text(e.key.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+    return pairs.entries
+        .map(
+          (e) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  decoration: BoxDecoration(color: const Color(0xFF1F1F1F), borderRadius: BorderRadius.circular(6)),
+                  child: Text(e.key.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text(e.value, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white))),
+              ],
+            ),
           ),
-          const SizedBox(width: 8),
-          Expanded(child: Text(e.value, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white))),
-        ],
-      ),
-    )).toList();
+        )
+        .toList();
   }
 
   void _openImageFullscreen(BuildContext context, String url, String heroTag) {
@@ -167,12 +190,17 @@ class MessageDetailPage extends StatelessWidget {
               child: Hero(
                 tag: heroTag,
                 child: InteractiveViewer(
-                  minScale: 1.0, maxScale: 6.0,
+                  minScale: 1.0,
+                  maxScale: 6.0,
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
-                    child: Image.network(url, fit: BoxFit.contain, gaplessPlayback: true,
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
                       errorBuilder: (_, __, ___) => const SizedBox(
-                        height: 200, child: Center(child: Text('Failed to load image', style: TextStyle(color: Colors.redAccent))),
+                        height: 200,
+                        child: Center(child: Text('Failed to load image', style: TextStyle(color: Colors.redAccent))),
                       ),
                     ),
                   ),
@@ -180,7 +208,8 @@ class MessageDetailPage extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: MediaQuery.of(ctx).padding.top + 12, right: 12,
+              top: MediaQuery.of(ctx).padding.top + 12,
+              right: 12,
               child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.of(ctx).pop()),
             ),
           ],
@@ -200,48 +229,41 @@ class MessageDetailPage extends StatelessWidget {
       backgroundColor: darkBackground,
       body: SafeArea(
         child: GestureDetector(
-          // Simple swipe nav
           onHorizontalDragEnd: (d) {
             final v = d.primaryVelocity ?? 0;
-            if (v < -200 && currentIndex < alerts.length - 1) onNext();
-            if (v > 200 && currentIndex > 0) onPrevious();
+            if (v < -200 && currentIndex < widget.alerts.length - 1) _goNext();
+            if (v > 200 && currentIndex > 0) _goPrevious();
           },
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            padding: const EdgeInsets.all(16),
             child: ListView(
               children: [
-                // Header row: back + date
                 Row(
                   children: [
-                    IconButton(onPressed: onBack, icon: const Icon(Icons.arrow_back, color: Colors.white)),
+                    IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back, color: Colors.white)),
                     const Spacer(),
                     Text(_formatDateTime(dt), style: const TextStyle(color: Colors.grey)),
                   ],
                 ),
                 const SizedBox(height: 8),
-
-                // Title + site chip
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text((a['title'] ?? 'Alert').toString(),
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                       decoration: BoxDecoration(color: const Color(0xFF1F1F1F), borderRadius: BorderRadius.circular(8)),
-                      child: Text(siteName, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      child: Text(widget.siteName, style: const TextStyle(color: Colors.white70, fontSize: 12)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-
                 _whatWeSee(a),
                 const SizedBox(height: 14),
-
                 if (img != null && img.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -253,15 +275,14 @@ class MessageDetailPage extends StatelessWidget {
                           children: [
                             Positioned.fill(
                               child: InteractiveViewer(
-                                minScale: 1.0, maxScale: 4.0,
+                                minScale: 1.0,
+                                maxScale: 4.0,
                                 child: Image.network(
-                                  img, fit: BoxFit.cover, gaplessPlayback: true,
-                                  loadingBuilder: (c, child, lp) => lp == null
-                                      ? child
-                                      : const Center(child: Padding(
-                                          padding: EdgeInsets.all(24),
-                                          child: CircularProgressIndicator(color: Colors.white),
-                                        )),
+                                  img,
+                                  fit: BoxFit.cover,
+                                  gaplessPlayback: true,
+                                  loadingBuilder: (c, child, lp) =>
+                                      lp == null ? child : const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator(color: Colors.white))),
                                   errorBuilder: (c, e, s) => Container(
                                     color: const Color(0xFF1A1A1A),
                                     alignment: Alignment.center,
@@ -271,7 +292,8 @@ class MessageDetailPage extends StatelessWidget {
                               ),
                             ),
                             Positioned(
-                              right: 8, top: 8,
+                              right: 8,
+                              top: 8,
                               child: IconButton(
                                 tooltip: 'Open full screen',
                                 icon: const Icon(Icons.open_in_full, color: Colors.white),
@@ -290,7 +312,6 @@ class MessageDetailPage extends StatelessWidget {
                     alignment: Alignment.center,
                     child: const Text('No image available', style: TextStyle(color: Colors.white54)),
                   ),
-
                 const SizedBox(height: 16),
                 ..._metadataRows(a),
                 const SizedBox(height: 80),
@@ -299,14 +320,13 @@ class MessageDetailPage extends StatelessWidget {
           ),
         ),
       ),
-
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            IconButton(icon: const Icon(Icons.arrow_left, size: 40), onPressed: currentIndex > 0 ? onPrevious : null, tooltip: 'Previous'),
-            IconButton(icon: const Icon(Icons.arrow_right, size: 40), onPressed: currentIndex < alerts.length - 1 ? onNext : null, tooltip: 'Next'),
+            IconButton(icon: const Icon(Icons.arrow_left, size: 40), onPressed: currentIndex > 0 ? _goPrevious : null, tooltip: 'Previous'),
+            IconButton(icon: const Icon(Icons.arrow_right, size: 40), onPressed: currentIndex < widget.alerts.length - 1 ? _goNext : null, tooltip: 'Next'),
           ],
         ),
       ),

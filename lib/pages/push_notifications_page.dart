@@ -4,8 +4,6 @@ import 'alerts_page.dart';
 import 'menu_page.dart';
 import 'graphql_service.dart';
 import 'detail_pages/message_detail_page.dart';
-
-// 👇 use the shared normalizer you placed in /pages
 import 'image_url.dart';
 
 const darkBackground = Color(0xFF121212);
@@ -93,7 +91,7 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
         final parsed = _parseDate(created) ?? DateTime.now();
 
         final rawImg = _pickRawImageField(alert);
-        // ✅ normalize using the shared util
+        // normalize using the shared util
         final fixedImg = normalizeImageUrl(
           rawImg,
           imageHost: imageHost,
@@ -105,7 +103,7 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
           'title': alert['alert_type'] ?? 'Alert',
           'preview': alert['alert_message_code'] ?? alert['alert_message'] ?? 'No message',
           'date': parsed,
-          'image_url': fixedImg, // ✅ normalized absolute URL
+          'image_url': fixedImg, // normalized absolute URL
         };
       }).toList();
 
@@ -133,7 +131,7 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
                     partyId: widget.partyId,
                     username: widget.username,
                     password: widget.password,
-                    siteName: widget.siteName, // ✅ dynamic
+                    siteName: widget.siteName,
                     fullName: widget.fullName,
                     email: widget.email,
                   ),
@@ -149,7 +147,7 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
                     partyId: widget.partyId,
                     username: widget.username,
                     password: widget.password,
-                    siteName: widget.siteName, // ✅ dynamic
+                    siteName: widget.siteName,
                     fullName: widget.fullName,
                     email: widget.email,
                   ),
@@ -184,8 +182,6 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
                               currentIndex: index,
                               onBack: () => Navigator.pop(context),
                               onMarkAsUnread: () {}, // (optional)
-                              onNext: () {}, // (optional)
-                              onPrevious: () {}, // (optional)
                               onAlertsTap: () {
                                 Navigator.pushReplacement(
                                   context,
@@ -231,7 +227,7 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
                                   ),
                                 );
                               },
-                              // ✅ pass dynamic site + host to detail page
+                              // pass dynamic site + host to detail page
                               siteName: widget.siteName,
                               imageHost: imageHost,
                             ),
