@@ -35,8 +35,8 @@ class _AlertsPageState extends State<AlertsPage> {
   final List<Map<String, dynamic>> _alerts = [];
   final ScrollController _scrollCtrl = ScrollController();
   bool isLoading = true, isFetchingMore = false, hasMore = true;
-  int _offset = 0, 
-  _limit = 20;
+  int _limit = 20;
+  int _offset = 0;
 
   final String imageHost = kDefaultImageHost;
 

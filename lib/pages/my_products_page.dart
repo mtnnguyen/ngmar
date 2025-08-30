@@ -53,7 +53,6 @@ class _ProductStatusPageState extends State<ProductStatusPage>
   bool _showProductList = false;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  bool get _dotRight => widget.showStatusDotRightAligned;
 
   @override
   void initState() {
@@ -78,7 +77,7 @@ class _ProductStatusPageState extends State<ProductStatusPage>
           await svc.getProducts(siteName: widget.siteName, partyId: widget.partyId);
 
       setState(() {
-        _availableCodes = (codes ?? []).cast<String>();
+        _availableCodes = codes.cast<String>();
       });
 
       await _fetchStatus();

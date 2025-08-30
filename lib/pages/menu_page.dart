@@ -77,7 +77,7 @@ class _MenuPageState extends State<MenuPage> {
         partyId: widget.partyId,
       );
       if (!mounted) return;
-      licensedProductCodes = products ?? [];
+      licensedProductCodes = products;
 
       // Fetch status for each product
       final flags = <String, int>{};

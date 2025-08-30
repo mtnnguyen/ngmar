@@ -145,12 +145,6 @@ class _HomePageState extends State<HomePage> {
     ];
   }
 
-  void _onItemTapped(int index) {
-    if (index >= 0 && index < _pages.length) {
-      setState(() => _selectedIndex = index);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

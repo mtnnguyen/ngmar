@@ -82,7 +82,6 @@ class _ProductStatusPageState extends State<ProductStatusPage> with SingleTicker
   Color _dotColorFromFlag(int? flag) => flag == 2 ? Colors.red : flag == 1 ? Colors.amber : Colors.green;
 
   String _getStatusColor(List<Map<String, dynamic>> statuses) {
-    bool hasRed = false;
     bool hasYellow = false;
 
     for (var status in statuses) {
@@ -116,7 +115,7 @@ class _ProductStatusPageState extends State<ProductStatusPage> with SingleTicker
   Future<void> _fetchAvailableProducts() async {
     try {
       final codes = await _service.getProducts(siteName: widget.siteName, partyId: widget.partyId);
-      _availableCodes = (codes ?? []).cast<String>();
+      _availableCodes = codes.cast<String>();
     } catch (_) {
       _availableCodes = [widget.productCode];
       _error = 'Failed to load product list.';
