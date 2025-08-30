@@ -5,6 +5,14 @@ import 'menu_page.dart';
 import 'graphql_service.dart';
 import 'detail_pages/message_detail_page.dart';
 
+// 👇 use the shared normalizer you placed in /pages
+import 'image_url.dart';
+
+const darkBackground = Color(0xFF121212);
+
+// Default image host (promote to widget param if you want per-env override)
+const String kDefaultImageHost = 'http://35.182.97.114';
+
 class PushNotificationsPage extends StatefulWidget {
   final int partyId;
   final String username;
@@ -31,12 +39,41 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
   List<Map<String, dynamic>> alerts = [];
   bool isLoading = true;
 
+  // Keep consistent with Alerts/Detail pages
+  final String imageHost = kDefaultImageHost;
+
   @override
   void initState() {
     super.initState();
     _loadNotifications();
   }
 
+  // ---------------------------- Helpers: dates -----------------------------
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is int) {
+      if (value > 1000000000000) {
+        return DateTime.fromMillisecondsSinceEpoch(value, isUtc: true).toLocal();
+      } else if (value > 1000000000) {
+        return DateTime.fromMillisecondsSinceEpoch(value * 1000, isUtc: true).toLocal();
+      }
+    }
+    if (value is String) {
+      try {
+        return DateTime.parse(value.replaceFirst('+00:00', 'Z')).toLocal();
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  String _formatDate(DateTime d) => '${d.month}/${d.day}/${d.year}';
+
+  String? _pickRawImageField(Map<String, dynamic> a) {
+    return (a['image_url'] ?? a['imageUrl'] ?? a['thumbnail'] ?? a['image'] ?? a['img'])?.toString();
+  }
+
+  // --------------------------------- Data ----------------------------------
   Future<void> _loadNotifications() async {
     final service = GraphQLService();
     const fromDate = '2025-07-01T00:00:00Z';
@@ -48,32 +85,39 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
       toDate: toDate,
     );
 
-    if (mounted) {
-      setState(() {
-        alerts = (result ?? []).map((alert) {
-          DateTime parsed = DateTime.now();
-          final created = (alert['created_at'] ?? alert['createdAt'] ?? '').toString();
-          try {
-            parsed = DateTime.parse(created.replaceFirst('+00:00', 'Z'));
-          } catch (_) {}
+    if (!mounted) return;
 
-          return {
-            ...alert,
-            'title': alert['alert_type'] ?? 'Alert',
-            'preview': alert['alert_message_code'] ?? alert['alert_message'] ?? 'No message',
-            'date': parsed,
-          };
-        }).toList();
+    setState(() {
+      alerts = (result ?? []).map((alert) {
+        final created = (alert['created_at'] ?? alert['createdAt']);
+        final parsed = _parseDate(created) ?? DateTime.now();
 
-        isLoading = false;
-      });
-    }
+        final rawImg = _pickRawImageField(alert);
+        // ✅ normalize using the shared util
+        final fixedImg = normalizeImageUrl(
+          rawImg,
+          imageHost: imageHost,
+          siteName: widget.siteName,
+        );
+
+        return {
+          ...alert,
+          'title': alert['alert_type'] ?? 'Alert',
+          'preview': alert['alert_message_code'] ?? alert['alert_message'] ?? 'No message',
+          'date': parsed,
+          'image_url': fixedImg, // ✅ normalized absolute URL
+        };
+      }).toList();
+
+      isLoading = false;
+    });
   }
 
+  // --------------------------------- Build ---------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: darkBackground,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text('Push Notifications'),
@@ -89,14 +133,14 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
                     partyId: widget.partyId,
                     username: widget.username,
                     password: widget.password,
-                    siteName: widget.siteName,
+                    siteName: widget.siteName, // ✅ dynamic
                     fullName: widget.fullName,
                     email: widget.email,
                   ),
                 ),
               );
             },
-            onPushTap: () {}, // Already here
+            onPushTap: () {}, // already here
             onMenuTap: () {
               Navigator.pushReplacement(
                 context,
@@ -105,7 +149,7 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
                     partyId: widget.partyId,
                     username: widget.username,
                     password: widget.password,
-                    siteName: widget.siteName,
+                    siteName: widget.siteName, // ✅ dynamic
                     fullName: widget.fullName,
                     email: widget.email,
                   ),
@@ -138,10 +182,10 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
                             builder: (_) => MessageDetailPage(
                               alerts: alerts,
                               currentIndex: index,
-                              onBack: () {}, // No back needed
-                              onMarkAsUnread: () {}, // Optional
-                              onNext: () {}, // Optional
-                              onPrevious: () {}, // Optional
+                              onBack: () => Navigator.pop(context),
+                              onMarkAsUnread: () {}, // (optional)
+                              onNext: () {}, // (optional)
+                              onPrevious: () {}, // (optional)
                               onAlertsTap: () {
                                 Navigator.pushReplacement(
                                   context,
@@ -187,23 +231,22 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
                                   ),
                                 );
                               },
+                              // ✅ pass dynamic site + host to detail page
+                              siteName: widget.siteName,
+                              imageHost: imageHost,
                             ),
                           ),
                         );
                       },
                       child: _NotificationCard(
-                        title: alert['title'],
-                        message: alert['preview'],
-                        time: _formatDate(alert['date']),
+                        title: (alert['title'] ?? 'Alert').toString(),
+                        message: (alert['preview'] ?? '').toString(),
+                        time: _formatDate(alert['date'] as DateTime),
                       ),
                     );
                   },
                 ),
     );
-  }
-
-  String _formatDate(DateTime d) {
-    return '${d.month}/${d.day}/${d.year}';
   }
 }
 
@@ -238,10 +281,7 @@ class _NotificationCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                time,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
-              ),
+              Text(time, style: const TextStyle(color: Colors.grey, fontSize: 12)),
             ],
           ),
         ],

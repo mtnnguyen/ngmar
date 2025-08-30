@@ -15,6 +15,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _siteController = TextEditingController(); // ✅ new controller for site
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -64,7 +65,9 @@ class _LoginPageState extends State<LoginPage> {
 
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
-    const siteName = 'TEST_SITE';
+    final siteName = _siteController.text.trim().isNotEmpty
+        ? _siteController.text.trim()
+        : 'TEST_SITE'; // ✅ fallback if empty
 
     try {
       final data = await _service.signin(username, password, siteName);
@@ -84,7 +87,8 @@ class _LoginPageState extends State<LoginPage> {
         final fullName = userInfo['fullName']!;
         final email = userInfo['email']!;
 
-        debugPrint('Signed in as: $fullName <$email> | partyId=$partyId');
+        debugPrint(
+            'Signed in as: $fullName <$email> | partyId=$partyId | site=$siteName');
 
         if (!mounted) return;
 
@@ -140,21 +144,25 @@ class _LoginPageState extends State<LoginPage> {
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset('assets/images/logo.png', height: 100),
                       const SizedBox(height: 40),
+                      _buildInputField('Site', _siteController), // ✅ site input
                       _buildInputField('User name', _usernameController),
-                      _buildInputField('Password', _passwordController, obscure: true),
+                      _buildInputField('Password', _passwordController,
+                          obscure: true),
                       const SizedBox(height: 24),
                       if (_errorMessage != null)
                         Column(
                           children: [
                             Text(
                               _errorMessage!,
-                              style: const TextStyle(color: Colors.redAccent),
+                              style:
+                                  const TextStyle(color: Colors.redAccent),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 12),
@@ -172,14 +180,18 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text('Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white)
+                              : const Text('Sign In',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold)),
                         ),
                       ),
                       const SizedBox(height: 12),
                       RichText(
                         text: TextSpan(
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 14),
                           children: [
                             const TextSpan(text: "Don't have an account? "),
                             TextSpan(
@@ -190,7 +202,8 @@ class _LoginPageState extends State<LoginPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                               recognizer: TapGestureRecognizer()
-                                ..onTap = () => Navigator.pushNamed(context, '/signup'),
+                                ..onTap = () =>
+                                    Navigator.pushNamed(context, '/signup'),
                             ),
                           ],
                         ),
@@ -209,11 +222,17 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Privacy', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      Text('Privacy',
+                          style: TextStyle(
+                              color: Colors.white60, fontSize: 12)),
                       SizedBox(width: 16),
-                      Text('Legal', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      Text('Legal',
+                          style: TextStyle(
+                              color: Colors.white60, fontSize: 12)),
                       SizedBox(width: 16),
-                      Text('Acknowledgements', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      Text('Acknowledgements',
+                          style: TextStyle(
+                              color: Colors.white60, fontSize: 12)),
                     ],
                   ),
                   SizedBox(height: 8),
@@ -226,7 +245,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller, {bool obscure = false}) {
+  Widget _buildInputField(String label, TextEditingController controller,
+      {bool obscure = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

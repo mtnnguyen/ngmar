@@ -4,8 +4,12 @@ import 'detail_pages/message_detail_page.dart';
 import 'navbar_widget.dart';
 import 'menu_page.dart';
 import 'push_notifications_page.dart';
+import 'image_url.dart';
 
 const darkBackground = Color(0xFF121212);
+
+// Default image host (override if you move servers)
+const String kDefaultImageHost = 'http://35.182.97.114';
 
 class AlertsPage extends StatefulWidget {
   const AlertsPage({
@@ -37,13 +41,39 @@ class _AlertsPageState extends State<AlertsPage> {
   String? fullName;
   String? email;
 
+  // If you ever need to change hosts per-env, promote this to a widget param.
+  final String imageHost = kDefaultImageHost;
+
   @override
   void initState() {
     super.initState();
     _fetchAlerts();
   }
 
-  String? _imageUrl(Map<String, dynamic> a) {
+  // ---------------------------- Helpers: dates -----------------------------
+
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is int) {
+      if (value > 1000000000000) {
+        return DateTime.fromMillisecondsSinceEpoch(value, isUtc: true).toLocal();
+      } else if (value > 1000000000) {
+        return DateTime.fromMillisecondsSinceEpoch(value * 1000, isUtc: true).toLocal();
+      }
+    }
+    if (value is String) {
+      try {
+        final s = value.replaceFirst('+00:00', 'Z');
+        return DateTime.parse(s).toLocal();
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  // ------------------------------- Data load -------------------------------
+
+  String? _pickRawImageField(Map<String, dynamic> a) {
     return (a['image_url'] ?? a['imageUrl'] ?? a['thumbnail'] ?? a['image'] ?? a['img'])?.toString();
   }
 
@@ -61,11 +91,16 @@ class _AlertsPageState extends State<AlertsPage> {
     setState(() {
       filteredAlerts = (alerts != null && alerts.isNotEmpty)
           ? alerts.map((alert) {
-              DateTime parsed = DateTime.now();
-              final created = (alert['created_at'] ?? alert['createdAt'] ?? '').toString();
-              try {
-                parsed = DateTime.parse(created.replaceFirst('+00:00', 'Z'));
-              } catch (_) {}
+              final created = (alert['created_at'] ?? alert['createdAt']);
+              final parsed = _parseDate(created) ?? DateTime.now();
+
+              final rawImg = _pickRawImageField(alert);
+              // ✅ normalize with the shared util
+              final fixedImg = normalizeImageUrl(
+                rawImg,
+                imageHost: imageHost,
+                siteName: widget.siteName,
+              );
 
               return {
                 ...alert,
@@ -73,7 +108,7 @@ class _AlertsPageState extends State<AlertsPage> {
                 'preview': alert['alert_message_code'] ?? alert['alert_message'] ?? 'No message',
                 'read': false,
                 'date': parsed,
-                'image_url': _imageUrl(alert),
+                'image_url': fixedImg, // ✅ normalized absolute URL
               };
             }).toList()
           : [
@@ -91,6 +126,8 @@ class _AlertsPageState extends State<AlertsPage> {
       email = widget.email;
     });
   }
+
+  // --------------------------------- UI ops --------------------------------
 
   void _sortAlerts(String order) {
     setState(() {
@@ -132,6 +169,8 @@ class _AlertsPageState extends State<AlertsPage> {
       });
     }
   }
+
+  // --------------------------------- Build ---------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +230,8 @@ class _AlertsPageState extends State<AlertsPage> {
           ),
         );
       },
+      siteName: widget.siteName,
+      imageHost: imageHost,
     );
   }
 
@@ -300,7 +341,7 @@ class _AlertTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final img = (alert['image_url'] as String?);
+    final img = (alert['image_url'] as String?); // already normalized absolute URL
     final heroTag = 'alert-image-$index';
 
     return ListTile(

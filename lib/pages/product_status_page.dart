@@ -5,6 +5,7 @@ import 'graphql_service.dart';
 import 'navbar_widget.dart';
 import 'alerts_page.dart';
 import 'menu_page.dart';
+import 'push_notifications_page.dart'; // for navbar push button
 
 const darkBackground = Color(0xFF121212);
 const _assetRoot = 'assets/images';
@@ -46,7 +47,7 @@ class _ProductStatusPageState extends State<ProductStatusPage>
   List<String> _availableCodes = [];
   bool _loading = true;
   String? _error;
-  int? _productStatusFlag;
+  int? _productStatusFlag; // overall/worst-case for header image
   List<Map<String, dynamic>> _statuses = [];
   bool _showProductList = false;
   late AnimationController _fadeController;
@@ -68,6 +69,85 @@ class _ProductStatusPageState extends State<ProductStatusPage>
     super.dispose();
   }
 
+  // ---------- Helpers ----------
+  int _asInt(dynamic v, [int fallback = 0]) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v.trim()) ?? fallback;
+    return fallback;
+  }
+
+  /// Priority: 2 (red) > 1 (amber/yellow) > 0 (green)
+  int _worstOf(Iterable<int> flags, {int fallback = 0}) {
+    var hasRed = false, hasAmber = false;
+    for (final f in flags) {
+      if (f == 2) { hasRed = true; break; }
+      if (f == 1) hasAmber = true;
+    }
+    if (hasRed) return 2;
+    if (hasAmber) return 1;
+    return fallback;
+  }
+
+  List<Map<String, dynamic>> _extractStatuses(dynamic resp) {
+    if (resp is List) {
+      return resp
+          .whereType<Map>()
+          .map((m) => m.map((k, v) => MapEntry(k.toString(), v)))
+          .cast<Map<String, dynamic>>()
+          .toList();
+    }
+    if (resp is Map && resp['statuses'] is List) {
+      return (resp['statuses'] as List)
+          .whereType<Map>()
+          .map((m) => m.map((k, v) => MapEntry(k.toString(), v)))
+          .cast<Map<String, dynamic>>()
+          .toList();
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  int _topLevelFlag(dynamic resp) {
+    if (resp is Map && resp.containsKey('product_status_flag')) {
+      return _asInt(resp['product_status_flag'], 0);
+    }
+    return 0;
+  }
+
+  String _colorFor(int? flag) {
+    switch (flag) {
+      case 1:
+        return 'yellow'; // asset folder uses yellow/amber
+      case 2:
+        return 'red';
+      default:
+        return 'green';
+    }
+  }
+
+  String _shortFor(String code) {
+    const map = {'IND_SUR': 'ind', 'OUT_SUR': 'out', 'PHA_GOV': 'phar', 'TIM_TRA': 'tim'};
+    return map[code] ?? code.toLowerCase();
+  }
+
+  String _assetFor(String code, int? flag) {
+    final color = _colorFor(flag);
+    final short = _shortFor(code);
+    return '$_assetRoot/products/$code/${color}_$short.png';
+  }
+
+  Color _dotColorFromFlag(int? flag) {
+    switch (flag) {
+      case 1:
+        return Colors.amber; // clearly yellow
+      case 2:
+        return Colors.red;
+      default:
+        return Colors.green;
+    }
+  }
+
+  // ---------- Data fetch ----------
   Future<void> _fetchAvailableProducts() async {
     try {
       final svc = GraphQLService();
@@ -111,32 +191,28 @@ class _ProductStatusPageState extends State<ProductStatusPage>
         return;
       }
 
-      final rawFlag = resp['product_status_flag'];
-      final resolvedFlag = rawFlag is int ? rawFlag : (int.tryParse('$rawFlag') ?? 0);
+      final statuses = _extractStatuses(resp);
 
-      final statuses = (resp['statuses'] as List?)
-              ?.map((e) => (e as Map).map((k, v) => MapEntry(k.toString(), v)))
-              .cast<Map<String, dynamic>>()
-              .toList() ??
-          <Map<String, dynamic>>[];
+      // Per-item flags (robust to int/string)
+      final itemFlags = statuses.map((s) => _asInt(s['product_status_flag'], 0)).toList();
+
+      // Worst-case from items; if none, fall back to top-level flag (if present)
+      final worstFromItems = itemFlags.isEmpty ? null : _worstOf(itemFlags, fallback: 0);
+      final overallFlag = worstFromItems ?? _topLevelFlag(resp);
 
       setState(() {
-        _productStatusFlag = _statuses.any((s) => s['product_status_flag'] == 2)
-          ? 2
-          : _statuses.any((s) => s['product_status_flag'] == 1)
-              ? 1
-              : 0;
+        _statuses = statuses;
+        _productStatusFlag = overallFlag;
+        _loading = false;
+      });
 
-              _statuses = statuses;
-              _loading = false;
-            });
       // Warm the asset (and try amber if yellow missing).
       try {
-        await rootBundle.load(_assetFor(_selectedCode, resolvedFlag));
+        await rootBundle.load(_assetFor(_selectedCode, overallFlag));
       } catch (_) {
         try {
           await rootBundle
-              .load(_assetFor(_selectedCode, resolvedFlag).replaceFirst('/yellow_', '/amber_'));
+              .load(_assetFor(_selectedCode, overallFlag).replaceFirst('/yellow_', '/amber_'));
         } catch (_) {}
       }
     } catch (e) {
@@ -147,39 +223,7 @@ class _ProductStatusPageState extends State<ProductStatusPage>
     }
   }
 
-  String _colorFor(int? flag) {
-    switch (flag) {
-      case 1:
-        return 'yellow';
-      case 2:
-        return 'red';
-      default:
-        return 'green';
-    }
-  }
-
-  String _shortFor(String code) {
-    const map = {'IND_SUR': 'ind', 'OUT_SUR': 'out', 'PHA_GOV': 'phar', 'TIM_TRA': 'tim'};
-    return map[code] ?? code.toLowerCase();
-  }
-
-  String _assetFor(String code, int? flag) {
-    final color = _colorFor(flag);
-    final short = _shortFor(code);
-    return '$_assetRoot/products/$code/${color}_$short.png';
-  }
-
-  Color _colorFromFlag(int? flag) {
-    switch (flag) {
-      case 1:
-        return Colors.orange;
-      case 2:
-        return Colors.red;
-      default:
-        return Colors.green;
-    }
-  }
-
+  // ---------- UI ----------
   @override
   Widget build(BuildContext context) {
     final assetPath = _assetFor(_selectedCode, _productStatusFlag);
@@ -189,11 +233,8 @@ class _ProductStatusPageState extends State<ProductStatusPage>
       backgroundColor: darkBackground,
       appBar: AppBar(
         backgroundColor: darkBackground,
-        centerTitle: true,
-        title: Text(
-          _productMap[_selectedCode] ?? _selectedCode,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        centerTitle: false,
+        title: const SizedBox.shrink(), // no page header text
         actions: [
           TopRightNavBar(
             onAlertsTap: () {
@@ -211,7 +252,21 @@ class _ProductStatusPageState extends State<ProductStatusPage>
                 ),
               );
             },
-            onPushTap: () => debugPrint('Push notification tapped'),
+            onPushTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PushNotificationsPage(
+                    partyId: widget.partyId,
+                    username: widget.username,
+                    password: widget.password,
+                    siteName: widget.siteName,
+                    fullName: widget.fullName,
+                    email: widget.email,
+                  ),
+                ),
+              );
+            },
             onMenuTap: () {
               Navigator.pushReplacement(
                 context,
@@ -233,71 +288,81 @@ class _ProductStatusPageState extends State<ProductStatusPage>
       body: RefreshIndicator(
         onRefresh: _fetchStatus,
         child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           children: [
-            // Product picker (expand/collapse)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _showProductList = !_showProductList;
-                        if (_showProductList) {
-                          _fadeController.forward();
-                        } else {
-                          _fadeController.reverse();
-                        }
-                      });
-                    },
-                    child: Row(
-                      children: [
-                        const Text(
-                          'Product',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          _showProductList ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+            // DROPDOWN-AS-HEADER — no bar/background/border
+            Align(
+              alignment: Alignment.centerLeft,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showProductList = !_showProductList;
+                    if (_showProductList) {
+                      _fadeController.forward();
+                    } else {
+                      _fadeController.reverse();
+                    }
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _productMap[_selectedCode] ?? _selectedCode,
+                        style: const TextStyle(
                           color: Colors.white,
+                          fontSize: 20, // header size
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
-                    ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        _showProductList ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ],
                   ),
-                  SizeTransition(
-                    sizeFactor: _fadeAnimation,
-                    axisAlignment: -1.0,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _availableCodes
-                          .where((code) => code != _selectedCode)
-                          .map(
-                            (code) => ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(
-                                _productMap[code] ?? code,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              onTap: () {
-                                setState(() {
-                                  _selectedCode = code;
-                                  _showProductList = false;
-                                });
-                                _fadeController.reverse();
-                                _fetchStatus();
-                              },
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
 
-            // Status image
+            // DROPDOWN LIST (animated)
+            SizeTransition(
+              sizeFactor: _fadeAnimation,
+              axisAlignment: -1.0,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _availableCodes
+                    .where((code) => code != _selectedCode)
+                    .map(
+                      (code) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          _productMap[code] ?? code,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            _selectedCode = code;
+                            _showProductList = false;
+                          });
+                          _fadeController.reverse();
+                          _fetchStatus();
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Status image (uses worst-case flag)
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
               child: Center(
@@ -311,7 +376,13 @@ class _ProductStatusPageState extends State<ProductStatusPage>
                       altPath,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) =>
-                          Icon(Icons.circle, size: 120, color: _colorFromFlag(_productStatusFlag)),
+                          Container(
+                            width: 120, height: 120,
+                            decoration: BoxDecoration(
+                              color: _dotColorFromFlag(_productStatusFlag),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
                     ),
                   ),
                 ),
@@ -320,7 +391,7 @@ class _ProductStatusPageState extends State<ProductStatusPage>
 
             const SizedBox(height: 24),
 
-            // Status list
+            // Status list (each dot uses its own parsed flag, drawn as a solid circle)
             if (_loading)
               const Center(
                 child: Padding(
@@ -349,8 +420,9 @@ class _ProductStatusPageState extends State<ProductStatusPage>
               ..._statuses.map((item) {
                 final name = item['product_status_name']?.toString() ?? 'Unknown';
                 final value = item['product_status_value']?.toString() ?? '';
-                final flag = item['product_status_flag'] as int? ?? 0;
-                final dotColor = _colorFromFlag(flag);
+                final flag = _asInt(item['product_status_flag'], 0);
+                final dotColor = _dotColorFromFlag(flag);
+
                 return Card(
                   color: Colors.grey.shade900,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -368,7 +440,15 @@ class _ProductStatusPageState extends State<ProductStatusPage>
                             style: const TextStyle(color: Colors.white, fontSize: 16),
                           ),
                         ),
-                        Icon(Icons.circle, size: 14, color: dotColor),
+                        // Solid colored dot (not affected by IconTheme)
+                        Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: dotColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ],
                     ),
                   ),

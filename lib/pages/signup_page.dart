@@ -9,6 +9,7 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  final _siteController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _firstNameController = TextEditingController();
@@ -16,8 +17,17 @@ class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _mobileController = TextEditingController();
 
-  String _selectedSite = 'Site 1';
-  final List<String> _sites = ['Site 1', 'Site 2', 'Site 3', 'Site 4'];
+  @override
+  void dispose() {
+    _siteController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _mobileController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +56,10 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
               const SizedBox(height: 30),
-              _buildDisabledField('Customer', 'Display but not editable'),
-              _buildDropdownField('Site', _selectedSite),
+
+              // Editable Site field (dynamic like others)
+              _buildInputField('Site', _siteController, hintText: 'TEST_SITE'),
+
               _buildInputField('User name', _usernameController, hintText: 'JohnDoe123'),
               _buildInputField('Password', _passwordController, obscure: true, hintText: '••••••••'),
               _buildInputField('First Name', _firstNameController, hintText: 'John'),
@@ -55,6 +67,7 @@ class _SignUpPageState extends State<SignUpPage> {
               _buildInputField('Email', _emailController, hintText: 'john@example.com'),
               _buildInputField('Mobile', _mobileController, hintText: '+1234567890'),
               const SizedBox(height: 24),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -65,7 +78,6 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   onPressed: () async {
                     final mobile = _mobileController.text.trim();
-
                     if (mobile.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -87,16 +99,19 @@ class _SignUpPageState extends State<SignUpPage> {
                       'phone': '',
                     };
 
+                    final siteName = _siteController.text.trim();
                     final graphqlService = GraphQLService();
-                    final result = await graphqlService.signup(party, 'TEST_SITE');
+                    final result = await graphqlService.signup(party, siteName);
+
                     print('party: $party');
+                    print('siteName: $siteName');
                     print('signup result: $result');
 
                     if (result != null && result['error_code'] == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Signup successful!')),
                       );
-                      Navigator.pop(context); // ⬅ Go back to login
+                      Navigator.pop(context);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -113,52 +128,6 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDisabledField(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel(label),
-        TextField(
-          controller: TextEditingController(text: value),
-          enabled: false,
-          style: const TextStyle(color: Colors.white),
-          decoration: _inputDecoration(),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildDropdownField(String label, String selected) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel(label),
-        Theme(
-          data: Theme.of(context).copyWith(canvasColor: Colors.grey[900]),
-          child: DropdownButtonFormField<String>(
-            initialValue: selected,
-            iconEnabledColor: Colors.white,
-            dropdownColor: Colors.black87,
-            decoration: _inputDecoration(),
-            items: _sites.map((site) {
-              return DropdownMenuItem(
-                value: site,
-                child: Text(site, style: const TextStyle(color: Colors.white)),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedSite = value!;
-              });
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
     );
   }
 

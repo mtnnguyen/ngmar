@@ -25,9 +25,6 @@ class SecurityPrivacyPage extends StatelessWidget {
           _buildSettingItem("Two-Factor Authentication", "Disabled", Icons.lock),
           _buildSettingItem("Password Strength", "Strong", Icons.security),
 
-          const SizedBox(height: 24),
-          _buildSectionTitle("Data Management"),
-          _buildSettingItem("Delete My Account", "Permanent deletion", Icons.delete_forever),
         ],
       ),
     );

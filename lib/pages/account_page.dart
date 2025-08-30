@@ -2,10 +2,7 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'personal_info_page.dart';
-import 'notifications_page.dart';
 import 'security_privacy_page.dart';
-import 'push_notifications_page.dart';
-import 'graphql_service.dart';
 
 class AccountPage extends StatelessWidget {
   final String fullName;
@@ -69,23 +66,6 @@ class AccountPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => PersonalInfoPage(
-                        fullName: fullName,
-                        email: email,
-                      ),
-                    ),
-                  ),
-                ),
-                _AccountOption(
-                  icon: Icons.notifications_none,
-                  label: 'Notifications',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => NotificationsPage(
-                        partyId: partyId,
-                        username: username,
-                        password: password,
-                        siteName: siteName,
                         fullName: fullName,
                         email: email,
                       ),
