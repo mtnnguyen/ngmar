@@ -37,28 +37,28 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> {
   final GraphQLService _service = GraphQLService();
   List<String> licensedProductCodes = [];
-  Map<String, int> productFlags = {};
   bool isLoading = true;
 
-  static const productMeta = {
+  // Static metadata per product (no status colors anymore)
+  static const Map<String, Map<String, Object>> productMeta = {
     'IND_SUR': {
       'title': 'Indoor Surveillance',
-      'prefix': 'ind',
+      'icon': 'assets/images/indoor.png',
       'builder': IndoorSurveillancePage.new,
     },
     'OUT_SUR': {
       'title': 'Outdoor Surveillance',
-      'prefix': 'out',
+      'icon': 'assets/images/outdoor.png',
       'builder': OutdoorSurveillancePage.new,
     },
     'TIM_TRA': {
       'title': 'Employee Time Tracking',
-      'prefix': 'tim',
+      'icon': 'assets/images/timetrack.png',
       'builder': EmployeeTimeTrackingPage.new,
     },
     'PHA_GOV': {
       'title': 'Pharmacy Governance',
-      'prefix': 'phar',
+      'icon': 'assets/images/phar.png',
       'builder': PharmacyGovernancePage.new,
     },
   };
@@ -77,27 +77,16 @@ class _MenuPageState extends State<MenuPage> {
         partyId: widget.partyId,
       );
       if (!mounted) return;
-      licensedProductCodes = products;
-
-      // Fetch status for each product
-      final flags = <String, int>{};
-      for (final code in licensedProductCodes) {
-        final status = await _service.getProductStatus(
-          siteName: widget.siteName,
-          partyId: widget.partyId,
-          productCode: code,
-        );
-        if (status != null) {
-          flags[code] = status['product_status_flag'] ?? 0;
-        }
-      }
-
-      if (!mounted) return;
-      setState(() => productFlags = flags);
+      setState(() {
+        licensedProductCodes = products;
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load products: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Failed to load products: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) setState(() => isLoading = false);
@@ -149,12 +138,14 @@ class _MenuPageState extends State<MenuPage> {
           children: [
             const Divider(color: Colors.grey),
             const SizedBox(height: 8),
-            const Text('App Version v1.0.0', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            const Text('App Version v1.0.0',
+                style: TextStyle(color: Colors.grey, fontSize: 12)),
             const SizedBox(height: 8),
             _FooterBar(
               onPrivacy: () => _navigateTo(context, PrivacyScreen.new),
               onLegal: () => _navigateTo(context, LegalScreen.new),
-              onAcknowledgements: () => _navigateTo(context, AcknowledgementsScreen.new),
+              onAcknowledgements: () =>
+                  _navigateTo(context, AcknowledgementsScreen.new),
             ),
           ],
         ),
@@ -162,7 +153,18 @@ class _MenuPageState extends State<MenuPage> {
     );
   }
 
-  void _navigateTo(BuildContext context, Widget Function({required int partyId, required String username, required String password, required String siteName, required String fullName, required String email}) builder) {
+  void _navigateTo(
+    BuildContext context,
+    Widget Function({
+      required int partyId,
+      required String username,
+      required String password,
+      required String siteName,
+      required String fullName,
+      required String email,
+    })
+        builder,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -196,7 +198,8 @@ class _MenuPageState extends State<MenuPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.fullName, style: const TextStyle(fontSize: 18, color: Colors.white)),
+                  Text(widget.fullName,
+                      style: const TextStyle(fontSize: 18, color: Colors.white)),
                   Text(widget.email, style: const TextStyle(color: Colors.grey)),
                 ],
               ),
@@ -213,7 +216,8 @@ class _MenuPageState extends State<MenuPage> {
       return const [
         Padding(
           padding: EdgeInsets.only(bottom: 12.0),
-          child: Text('No licensed products found.', style: TextStyle(color: Colors.grey)),
+          child:
+              Text('No licensed products found.', style: TextStyle(color: Colors.grey)),
         ),
       ];
     }
@@ -222,13 +226,17 @@ class _MenuPageState extends State<MenuPage> {
       final meta = productMeta[code];
       if (meta == null) return const SizedBox.shrink();
 
-      final title = meta['title'] as String;
-      final prefix = meta['prefix'] as String;
-      final builder = meta['builder'] as Widget Function({required int partyId, required String username, required String password, required String siteName, required String fullName, required String email});
-
-      final flag = productFlags[code] ?? 0;
-      final color = flag == 1 ? 'yellow' : flag == 2 ? 'red' : 'green';
-      final iconPath = 'assets/images/products/$code/${color}_$prefix.png';
+      final String title = meta['title'] as String;
+      final String iconPath = meta['icon'] as String;
+      final builder = meta['builder']
+          as Widget Function({
+            required int partyId,
+            required String username,
+            required String password,
+            required String siteName,
+            required String fullName,
+            required String email,
+          });
 
       return ListTile(
         leading: Image.asset(iconPath, height: 28),

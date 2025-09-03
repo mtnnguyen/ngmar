@@ -26,3 +26,7 @@ flutter:
     - assets/images/products/OUT_SUR/
     - assets/images/products/PHA_GOV/
     - assets/images/products/TIM_TRA/
+    - assets/images/indoor.png
+    - assets/images/outdoor.png
+    - assets/images/phar.png
+    - assets/images/timetrack.png
