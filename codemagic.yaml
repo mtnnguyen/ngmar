@@ -19,7 +19,10 @@ workflows:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Build iOS release (Codemagic will handle signing with API key)
+      - name: Fetch signing certificates & provisioning profiles
+        script: xcode-project use-profiles
+
+      - name: Build iOS release with automatic signing
         script: flutter build ipa --release
 
     artifacts:
