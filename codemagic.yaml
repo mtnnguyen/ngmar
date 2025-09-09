@@ -8,9 +8,12 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      groups:
+        - app_store_credentials   # 👈 this links your variables
+
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
-        APP_STORE_APP_ID: "6752107383" # SurveilOne AI Agent app ID from App Store Connect
+        APP_STORE_APP_ID: "6752107383"
 
     scripts:
       - name: Get Flutter dependencies
