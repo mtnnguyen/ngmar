@@ -19,8 +19,10 @@ workflows:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Build iOS release
-        script: flutter build ios --release --no-codesign
+      - name: Build iOS release (with automatic codesign)
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
