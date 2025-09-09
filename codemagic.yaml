@@ -1,6 +1,6 @@
 workflows:
-  ios-sim-preview:
-    name: iOS Preview for Appetize
+  ios-testflight:
+    name: iOS TestFlight Build
     instance_type: mac_mini_m2
     max_build_duration: 60
 
@@ -8,47 +8,25 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      groups:
-        - appetize_credentials
+      vars:
+        BUNDLE_ID: "com.surveilone.ngmar"
+        APP_STORE_APP_ID: "6752107383" # SurveilOne AI Agent app ID from App Store Connect
 
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Show available Xcode schemes
-        script: |
-          xcodebuild -list -project ios/Runner.xcodeproj
-
-      - name: Build iOS simulator app using xcodebuild
-        script: |
-          xcodebuild \
-            -project ios/Runner.xcodeproj \
-            -scheme Runner \
-            -sdk iphonesimulator \
-            -configuration Debug \
-            -destination 'platform=iOS Simulator,name=iPhone 14 Pro,OS=17.5' \
-            -derivedDataPath build/ios_sim_output
-
-      - name: Zip .app for Appetize
-        script: |
-          cd build/ios_sim_output/Build/Products/Debug-iphonesimulator
-          zip -r app.zip Runner.app
-
-      - name: Upload to Appetize.io
-        script: |
-          curl --location --request POST "https://api.appetize.io/v1/apps" \
-            --header "Authorization: $APPETIZE_API_TOKEN" \
-            --form "file=@build/ios_sim_output/Build/Products/Debug-iphonesimulator/app.zip" \
-            --form "platform=ios" \
-            --form "note=NgMar Flutter App"
-
-        - name: Upload API onto Android
-        script: |
-          curl --location --request POST "https://api.appetize.io/v1/apps" \
-            --header "Authorization: ..." \
-            --form "file=@build/ios_sim_output/Build/Products/Debug-iphonesimulator/app.zip" \
-            --form "platform=ios" \ ...
-            --form "note=NgMar Flutter App"
+      - name: Build iOS release
+        script: flutter build ios --release --no-codesign
 
     artifacts:
-      - build/ios_sim_output/Build/Products/Debug-iphonesimulator/app.zip
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        apple_id: "chris.sivalingam@surveil.one"
+        password: $APPLE_PASSWORD
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        submit_to_testflight: true
