@@ -9,7 +9,7 @@ workflows:
       xcode: latest
       cocoapods: default
       groups:
-        - app_store_credentials   # contains Issuer ID, Key ID, Private Key
+        - app_store_credentials
 
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
@@ -27,7 +27,7 @@ workflows:
 
     publishing:
       app_store_connect:
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
