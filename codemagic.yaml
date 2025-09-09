@@ -11,20 +11,19 @@ workflows:
       groups:
         - app_store_credentials
 
+      vars:
+        BUNDLE_ID: "com.surveilone.ngmar"
+        APP_STORE_APP_ID: "6752107383"
+
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Build iOS release (with automatic codesign)
+      - name: Build iOS release (Codemagic will handle signing with API key)
         script: flutter build ipa --release
 
     artifacts:
       - build/ios/ipa/*.ipa
-
-    code_signing:
-      ios:
-        distribution_type: app_store
-        bundle_identifier: "com.surveilone.ngmar"
 
     publishing:
       app_store_connect:
