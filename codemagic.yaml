@@ -19,18 +19,15 @@ workflows:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Fetch signing certificates & provisioning profiles
-        script: xcode-project use-profiles
-
-      - name: Build iOS release with automatic signing
-        script: flutter build ipa --release
+      - name: Build iOS release (no codesign, Codemagic will sign)
+        script: flutter build ipa --release --no-codesign
 
     artifacts:
       - build/ios/ipa/*.ipa
 
     publishing:
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY      # base64 of .p8
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER    # your Key ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID      # your Issuer ID
         submit_to_testflight: true
