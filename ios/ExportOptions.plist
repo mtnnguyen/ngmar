@@ -1,34 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
- "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <!-- Build method: TestFlight/App Store -->
   <key>method</key>
   <string>app-store</string>
-
-  <!-- Explicit provisioning profile mapping -->
+  <key>signingStyle</key>
+  <string>manual</string>
   <key>provisioningProfiles</key>
   <dict>
     <key>com.surveilone.ngmar</key>
     <string>SurveilOne_TestFlight_Profile</string>
   </dict>
-
-  <!-- Manual signing enforced -->
-  <key>signingStyle</key>
-  <string>manual</string>
-
-  <!-- Match your cert -->
-  <key>signingCertificate</key>
-  <string>Apple Distribution</string>
-
-  <!-- Match your team -->
   <key>teamID</key>
   <string>2JQD483STZ</string>
-
-  <!-- Debugging and symbol upload -->
-  <key>compileBitcode</key>
-  <true/>
   <key>uploadBitcode</key>
   <false/>
   <key>uploadSymbols</key>
