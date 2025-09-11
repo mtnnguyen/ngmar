@@ -11,17 +11,28 @@ workflows:
       cocoapods: default
       groups:
         - app_store_credentials
-        - signing   # contains CERTIFICATE_PASSWORD only
+        - signing   # contains CERTIFICATE_PASSWORD, CERTIFICATE_BASE64, PROVISION_PROFILE_BASE64
 
     scripts:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
 
-      - name: Set up code signing
+      - name: Install signing certificate & profile manually
         script: |
-          # Fetch and install uploaded .p12 and .mobileprovision
-          xcode-project use-profiles
+          # Decode and install certificate (.p12)
+          echo $CERTIFICATE_BASE64 | base64 --decode > SurveilOne_Distribution.p12
+          security create-keychain -p "" build.keychain
+          security import SurveilOne_Distribution.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -A
+          security list-keychains -s ~/Library/Keychains/build.keychain
+          security default-keychain -s ~/Library/Keychains/build.keychain
+          security unlock-keychain -p "" ~/Library/Keychains/build.keychain
+          security set-keychain-settings -lut 21600 ~/Library/Keychains/build.keychain
+
+          # Decode and install provisioning profile
+          echo $PROVISION_PROFILE_BASE64 | base64 --decode > SurveilOne_TestFlight_Profile.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp SurveilOne_TestFlight_Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build iOS app
         script: |
