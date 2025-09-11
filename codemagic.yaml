@@ -8,12 +8,13 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      groups:
-        - app_store_credentials
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
         TEAM_ID: "2JQD483STZ"
+        PROVISIONING_PROFILE_PATH: "codemagic_profiles/SurveilOne_TestFlight_Profile.mobileprovision"
+      groups:
+        - app_store_credentials
 
     scripts:
       - name: Get Flutter dependencies
@@ -25,7 +26,7 @@ workflows:
       - name: Install certificate & provisioning profile
         script: |
           echo "🔑 Installing certificate..."
-          keychain add-certificates --certificate SurveilOne_Distribution.p12 --password "$CERTIFICATE_PASSWORD"
+          echo "$CERTIFICATE_PASSWORD" | keychain add-certificates --certificate SurveilOne_Distribution.p12
 
           echo "📄 Installing provisioning profile..."
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
