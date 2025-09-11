@@ -13,8 +13,9 @@ workflows:
 
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
+        APP_STORE_APP_ID: "6752107383"
         TEAM_ID: "2JQD483STZ"
-        PROVISIONING_PROFILE_NAME: "SurveilOne_TestFlight_Profile"
+        PROVISIONING_PROFILE_NAME: "SurveilOne TestFlight Profile"
 
     scripts:
       - name: Get Flutter dependencies
@@ -23,10 +24,20 @@ workflows:
       - name: Build iOS archive (unsigned)
         script: flutter build ios --release --no-codesign
 
-      - name: Build & Sign IPA
+      - name: Debug provisioning profiles
         script: |
-          xcode-project use-profiles   # installs .p12 + .mobileprovision automatically
+          echo "Listing all provisioning profiles installed in the build machine:"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "Dumping details of provisioning profiles:"
+          for profile in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            echo "---- $profile ----"
+            security cms -D -i "$profile" | grep -A 2 UUID
+            security cms -D -i "$profile" | grep -A 2 Name
+          done
 
+      - name: Code sign & export IPA
+        script: |
+          xcode-project use-profiles
           cat <<EOF > export_options.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -47,10 +58,17 @@ workflows:
           </plist>
           EOF
 
-          xcode-project build-ipa \
-            --workspace ios/Runner.xcworkspace \
-            --scheme Runner \
-            --export-options-plist export_options.plist
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -archivePath build/ios/xcarchive/Runner.xcarchive \
+            archive DEVELOPMENT_TEAM=${TEAM_ID} CODE_SIGN_STYLE=Manual
+
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/ios/xcarchive/Runner.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
