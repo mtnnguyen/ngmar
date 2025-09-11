@@ -2,33 +2,28 @@ workflows:
   ios-testflight-build:
     name: iOS TestFlight Build
     environment:
-      vars:
-        APP_STORE_APP_ID: 6752107383
-        BUNDLE_ID: "com.surveilone.ngmar"
-        TEAM_ID: 2JQD483STZ
       flutter: stable
       xcode: 16.4
       cocoapods: default
+      vars:
+        BUNDLE_ID: "com.surveilone.ngmar"
       groups:
-        - app_store_credentials
         - signing
-
+        - app_store_credentials
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Install signing certificate & profile manually (with debug)
+      - name: Install signing certificate & profile
         script: |
-          set -x
           echo $CERTIFICATE_BASE64 | base64 --decode > SurveilOne_Distribution.p12
+          echo $PROVISION_PROFILE_BASE64 | base64 --decode > SurveilOne_TestFlight_Profile.mobileprovision
           security create-keychain -p "" build.keychain
           security import SurveilOne_Distribution.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -A
           security list-keychains -s build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
-
-          echo $PROVISION_PROFILE_BASE64 | base64 --decode > SurveilOne_TestFlight_Profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp SurveilOne_TestFlight_Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
@@ -44,18 +39,18 @@ workflows:
           pod install
           cd ..
 
-      - name: Build iOS app (manual signing enforced only for Runner)
+      - name: Build iOS app (manual signing)
         script: |
           set -x
           xcodebuild -workspace ios/Runner.xcworkspace \
                      -scheme Runner \
                      -configuration Release \
                      -archivePath build/Runner.xcarchive \
-                     -allowProvisioningUpdates \
                      -destination generic/platform=iOS \
-                     CODE_SIGN_STYLE=Manual \
                      CODE_SIGN_IDENTITY="Apple Distribution" \
+                     CODE_SIGN_STYLE=Manual \
                      DEVELOPMENT_TEAM=$TEAM_ID \
+                     PROVISIONING_PROFILE_SPECIFIER="SurveilOne_TestFlight_Profile" \
                      archive
 
           xcodebuild -exportArchive \
@@ -63,13 +58,12 @@ workflows:
                      -exportOptionsPlist ios/ExportOptions.plist \
                      -exportPath build/ios/ipa
 
-      - name: Upload to App Store Connect
-        script: |
-          xcrun altool --upload-app \
-            --type ios \
-            --file build/ios/ipa/Runner.ipa \
-            --apiKey $APP_STORE_CONNECT_KEY_IDENTIFIER \
-            --apiIssuer $APP_STORE_CONNECT_ISSUER_ID
-
     artifacts:
       - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        app_id: $APP_STORE_APP_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
