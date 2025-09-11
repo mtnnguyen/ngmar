@@ -11,18 +11,19 @@ workflows:
       cocoapods: default
       groups:
         - app_store_credentials
-        - signing  # should contain CERTIFICATE_PASSWORD, CERTIFICATE_BASE64, PROVISION_PROFILE_BASE64
+        - signing
 
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Install signing certificate & profile manually
+      - name: Install signing certificate & profile manually (with debug)
         script: |
           set -x
           echo $CERTIFICATE_BASE64 | base64 --decode > SurveilOne_Distribution.p12
           security create-keychain -p "" build.keychain
           security import SurveilOne_Distribution.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -A
+          security list-keychains -s build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
@@ -43,7 +44,7 @@ workflows:
           pod install
           cd ..
 
-      - name: Build iOS app (manual signing)
+      - name: Build iOS app (manual signing enforced only for Runner)
         script: |
           set -x
           xcodebuild -workspace ios/Runner.xcworkspace \
@@ -53,9 +54,7 @@ workflows:
                      -allowProvisioningUpdates \
                      -destination generic/platform=iOS \
                      CODE_SIGN_STYLE=Manual \
-                     CODE_SIGNING_REQUIRED=YES \
                      CODE_SIGN_IDENTITY="Apple Distribution" \
-                     PROVISIONING_PROFILE_SPECIFIER="SurveilOne_TestFlight_Profile" \
                      DEVELOPMENT_TEAM=$TEAM_ID \
                      archive
 
@@ -69,8 +68,8 @@ workflows:
           xcrun altool --upload-app \
             --type ios \
             --file build/ios/ipa/Runner.ipa \
-            --apiKey "$APP_STORE_CONNECT_API_KEY" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+            --apiKey $APP_STORE_CONNECT_KEY_IDENTIFIER \
+            --apiIssuer $APP_STORE_CONNECT_ISSUER_ID
 
     artifacts:
       - build/ios/ipa/*.ipa
