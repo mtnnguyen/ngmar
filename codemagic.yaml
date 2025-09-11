@@ -11,15 +11,10 @@ workflows:
       groups:
         - app_store_credentials
 
-      # 👇 Link uploaded cert & profile
-      certificates:
-        - SurveilOne_Distribution.p12
-      provisioning_profiles:
-        - SurveilOne TestFlight Profile
-
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
+        TEAM_ID: "2JQD483STZ"
 
     scripts:
       - name: Get Flutter dependencies
