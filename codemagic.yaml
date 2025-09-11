@@ -1,58 +1,47 @@
 workflows:
-  ios-testflight:
+  ios-testflight-build:
     name: iOS TestFlight Build
-    instance_type: mac_mini_m2
-    max_build_duration: 60
-
     environment:
-      flutter: stable
-      xcode: latest
-      cocoapods: default
       vars:
+        APP_STORE_APP_ID: 6752107383
         BUNDLE_ID: "com.surveilone.ngmar"
-        APP_STORE_APP_ID: "6752107383"
-        TEAM_ID: "2JQD483STZ"
+        TEAM_ID: 2JQD483STZ
         PROVISIONING_PROFILE_PATH: "codemagic_profiles/SurveilOne_TestFlight_Profile.mobileprovision"
-      groups:
-        - app_store_credentials
-
+        CERTIFICATE_PASSWORD: Encrypted(...)  # replace with your actual encrypted password if needed
+      flutter: stable
+      xcode: 16.4
     scripts:
-      - name: Get Flutter dependencies
-        script: flutter pub get
-
-      - name: Build iOS app (unsigned)
-        script: flutter build ios --release --no-codesign
-
       - name: Install certificate & provisioning profile
         script: |
           echo "Installing certificate..."
-          echo "$CERTIFICATE_PASSWORD" | keychain add-certificates --certificate SurveilOne_Distribution.p12
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import SurveilOne_Distribution.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
 
           echo "Installing provisioning profile..."
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp "$PROVISIONING_PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
 
-          echo "Installed provisioning profiles:"
-          ls -la ~/Library/MobileDevice/Provisioning\ Profiles
-
-      - name: Debug installed provisioning profile UUIDs
+      - name: Get Flutter dependencies
         script: |
-          for profile in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
-            echo "---- $profile ----"
-            security cms -D -i "$profile" | grep -A 5 UUID
-            security cms -D -i "$profile" | grep -A 5 Name
-          done
+          flutter pub get
+
+      - name: Build iOS app (unsigned)
+        script: |
+          flutter build ios --release --no-codesign
 
       - name: Build signed IPA
         script: |
-          echo "🚀 Building signed IPA using xcodebuild..."
-
+          echo "Archiving project..."
           xcodebuild -workspace ios/Runner.xcworkspace \
                      -scheme Runner \
                      -configuration Release \
                      -archivePath build/Runner.xcarchive \
+                     DEVELOPMENT_TEAM=$TEAM_ID \
                      archive
 
+          echo "📦 Exporting IPA..."
           xcodebuild -exportArchive \
                      -archivePath build/Runner.xcarchive \
                      -exportOptionsPlist ExportOptions.plist \
@@ -60,7 +49,6 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
-
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
