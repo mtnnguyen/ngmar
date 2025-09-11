@@ -9,19 +9,48 @@ workflows:
       xcode: latest
       cocoapods: default
       groups:
-        - app_store_credentials   # ✅ contains your App Store Connect API keys & TEAM_ID
+        - app_store_credentials
+
+      vars:
+        BUNDLE_ID: "com.surveilone.ngmar"
+        TEAM_ID: "2JQD483STZ"
+        PROVISIONING_PROFILE_NAME: "SurveilOne TestFlight Profile"  # ✅ exact match
 
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Build iOS archive & sign
+      - name: Build iOS archive (unsigned)
+        script: flutter build ios --release --no-codesign
+
+      - name: Build & Sign IPA
         script: |
-          flutter build ios --release --no-codesign
-          xcode-project use-profiles   # installs your uploaded .p12 + provisioning profile
+          xcode-project use-profiles   # installs .p12 + .mobileprovision automatically
+
+          cat <<EOF > export_options.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key>
+              <string>${PROVISIONING_PROFILE_NAME}</string>
+            </dict>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>teamID</key>
+            <string>${TEAM_ID}</string>
+          </dict>
+          </plist>
+          EOF
+
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
-            --scheme Runner
+            --scheme Runner \
+            --export-options-plist export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
