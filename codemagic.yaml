@@ -12,10 +12,13 @@ workflows:
       groups:
         - app_store_credentials
         - signing
-    certificates:
-      - SurveilOne_Distribution.p12
-    provisioning_profiles:
-      - SurveilOne_TestFlight_Profile
+
+    code_signing:
+      certificates:
+        - certificate_name: SurveilOne_Distribution.p12
+          certificate_password: $CERTIFICATE_PASSWORD
+      provisioning_profiles:
+        - SurveilOne_TestFlight_Profile.mobileprovision
 
     scripts:
       - name: Get Flutter dependencies
