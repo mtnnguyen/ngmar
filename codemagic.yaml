@@ -9,18 +9,13 @@ workflows:
       xcode: latest
       cocoapods: default
       groups:
-        - app_store_credentials   # keep this so Codemagic has your App Store API keys
-
-      certificates:
-        - SurveilOne_Distribution.p12   # ✅ must match the uploaded .p12 name
-
-      provisioning_profiles:
-        - SurveilOne TestFlight Profile # ✅ must match your uploaded .mobileprovision name
+        - app_store_credentials   # App Store API keys
 
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
         TEAM_ID: "2JQD483STZ"
+        PROVISIONING_PROFILE: "SurveilOne TestFlight Profile" # use profile name here
 
     scripts:
       - name: Get Flutter dependencies
@@ -31,7 +26,10 @@ workflows:
 
       - name: Code sign & export IPA
         script: |
-          xcode-project use-profiles
+          xcode-project use-profiles \
+            --certificate "SurveilOne_Distribution.p12" \
+            --provisioning-profile "$PROVISIONING_PROFILE"
+
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner \
