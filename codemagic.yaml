@@ -14,6 +14,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
+        TEAM_ID: "YOUR_TEAM_ID_HERE"   # Replace with your actual 10-character Apple Developer Team ID
 
     scripts:
       - name: Get Flutter dependencies
@@ -25,9 +26,29 @@ workflows:
       - name: Code sign & export IPA
         script: |
           xcode-project use-profiles
+          cat <<EOF > export_options.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.surveilone.ngmar</key>
+              <string>SurveilOne TestFlight Profile</string>
+            </dict>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>teamID</key>
+            <string>${TEAM_ID}</string>
+          </dict>
+          </plist>
+          EOF
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
-            --scheme Runner
+            --scheme Runner \
+            --export-options-plist export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
