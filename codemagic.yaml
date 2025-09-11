@@ -24,6 +24,7 @@ workflows:
 
       - name: Build signed IPA
         script: |
+          echo "📦 Archiving project..."
           xcodebuild -workspace ios/Runner.xcworkspace \
                      -scheme Runner \
                      -configuration Release \
@@ -31,6 +32,7 @@ workflows:
                      DEVELOPMENT_TEAM=$TEAM_ID \
                      archive
 
+          echo "🚀 Exporting IPA..."
           xcodebuild -exportArchive \
                      -archivePath build/Runner.xcarchive \
                      -exportOptionsPlist ExportOptions.plist \
