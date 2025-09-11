@@ -26,11 +26,27 @@ workflows:
       - name: Code sign & export IPA
         script: |
           xcode-project use-profiles
+          cat <<EOF > export_options.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.surveilone.ngmar</key>
+              <string>SurveilOne TestFlight Profile</string>
+            </dict>
+            <key>signingStyle</key>
+            <string>manual</string>
+          </dict>
+          </plist>
+          EOF
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner \
-            --export-method app-store \
-            --provisioning-profile "$IOS_PROVISIONING_PROFILE"
+            --export-options-plist export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
