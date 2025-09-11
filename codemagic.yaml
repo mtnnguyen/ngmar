@@ -27,8 +27,7 @@ workflows:
           xcode-project use-profiles
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
-            --scheme Runner \
-            --export-method app-store
+            --scheme Runner
 
     artifacts:
       - build/ios/ipa/*.ipa
