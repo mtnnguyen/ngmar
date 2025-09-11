@@ -11,12 +11,17 @@ workflows:
       cocoapods: default
       groups:
         - app_store_credentials
-        - signing   # contains CERTIFICATE_PASSWORD only
+        - signing   # contains CERTIFICATE_PASSWORD
 
     scripts:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
+
+      - name: Set up code signing
+        script: |
+          # This will install your uploaded .p12 and .mobileprovision
+          xcode-project use-profiles
 
       - name: Build iOS app
         script: |
