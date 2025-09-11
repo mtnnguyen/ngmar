@@ -7,7 +7,7 @@ workflows:
         BUNDLE_ID: "com.surveilone.ngmar"
         TEAM_ID: 2JQD483STZ
         PROVISIONING_PROFILE_PATH: "codemagic_profiles/SurveilOne_TestFlight_Profile.mobileprovision"
-        CERTIFICATE_PASSWORD: Encrypted(...)  # replace with your actual encrypted password if needed
+        CERTIFICATE_PASSWORD: "test123456"
       flutter: stable
       xcode: 16.4
     scripts:
