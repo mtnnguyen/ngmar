@@ -11,35 +11,17 @@ workflows:
       cocoapods: default
       groups:
         - app_store_credentials
-        - signing  # only CERTIFICATE_PASSWORD should be in this group
+        - signing   # only CERTIFICATE_PASSWORD here
 
     scripts:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
 
-      - name: Build iOS app (unsigned)
+      - name: Build iOS app
         script: |
-          flutter build ios --release --no-codesign
-
-      - name: Archive and export signed IPA
-        script: |
-          echo "📦 Archiving project manually..."
-          xcodebuild -workspace ios/Runner.xcworkspace \
-                     -scheme Runner \
-                     -configuration Release \
-                     -archivePath build/Runner.xcarchive \
-                     DEVELOPMENT_TEAM=$TEAM_ID \
-                     CODE_SIGN_STYLE=Manual \
-                     CODE_SIGN_IDENTITY="Apple Distribution" \
-                     PROVISIONING_PROFILE_SPECIFIER="SurveilOne_TestFlight_Profile" \
-                     archive
-
-          echo "🚀 Exporting signed IPA..."
-          xcodebuild -exportArchive \
-                     -archivePath build/Runner.xcarchive \
-                     -exportOptionsPlist ios/ExportOptions.plist \
-                     -exportPath build/ios/ipa
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
