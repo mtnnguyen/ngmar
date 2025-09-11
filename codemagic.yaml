@@ -14,7 +14,6 @@ workflows:
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
-        IOS_PROVISIONING_PROFILE: "SurveilOne TestFlight Profile"
 
     scripts:
       - name: Get Flutter dependencies
@@ -22,11 +21,6 @@ workflows:
 
       - name: Build iOS archive (unsigned)
         script: flutter build ios --release --no-codesign
-
-      - name: Install provisioning profiles
-        script: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp "$CM_PROVISIONING_PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Code sign & export IPA
         script: |
@@ -46,7 +40,7 @@ workflows:
             <key>signingStyle</key>
             <string>manual</string>
             <key>teamID</key>
-            <string>YOUR_TEAM_ID_HERE</string>
+            <string>YOUR_TEAM_ID</string>
           </dict>
           </plist>
           EOF
