@@ -14,7 +14,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
         TEAM_ID: "2JQD483STZ"
-        PROVISIONING_PROFILE_NAME: "SurveilOne TestFlight Profile"  # ✅ exact match
+        PROVISIONING_PROFILE_NAME: "SurveilOne_TestFlight_Profile"
 
     scripts:
       - name: Get Flutter dependencies
