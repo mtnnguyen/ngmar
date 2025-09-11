@@ -11,31 +11,30 @@ workflows:
       cocoapods: default
       groups:
         - app_store_credentials
-        - signing
 
     scripts:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
 
-      - name: Build iOS app (unsigned)
+      - name: Build iOS app with automatic signing
         script: |
-          flutter build ios --release --no-codesign
+          flutter build ios --release
 
-      - name: Build signed IPA
-        script: |
-          echo "📦 Archiving project..."
+          echo "📦 Archiving project with automatic code signing..."
           xcodebuild -workspace ios/Runner.xcworkspace \
                      -scheme Runner \
                      -configuration Release \
                      -archivePath build/Runner.xcarchive \
+                     -allowProvisioningUpdates \
+                     -allowProvisioningDeviceRegistration \
                      DEVELOPMENT_TEAM=$TEAM_ID \
                      archive
 
-          echo "🚀 Exporting IPA..."
+          echo "🚀 Exporting signed IPA..."
           xcodebuild -exportArchive \
                      -archivePath build/Runner.xcarchive \
-                     -exportOptionsPlist ExportOptions.plist \
+                     -exportOptionsPlist ios/ExportOptions.plist \
                      -exportPath build/ios/ipa
 
     artifacts:
@@ -47,4 +46,3 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
-  
