@@ -9,13 +9,12 @@ workflows:
       xcode: latest
       cocoapods: default
       groups:
-        - app_store_credentials   # only this group needed
+        - app_store_credentials   # API key group for TestFlight upload
 
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
         TEAM_ID: "2JQD483STZ"
-        PROVISIONING_PROFILE: "9faa40b6-5dc2-4dfe-a427-8e9676592ce1" # UUID of your profile
 
     scripts:
       - name: Get Flutter dependencies
@@ -24,38 +23,12 @@ workflows:
       - name: Build iOS archive (unsigned)
         script: flutter build ios --release --no-codesign
 
-      - name: Install provisioning profile
-        script: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp ios/SurveilOne_TestFlight_Profile.mobileprovision \
-            ~/Library/MobileDevice/Provisioning\ Profiles/${PROVISIONING_PROFILE}.mobileprovision
-
       - name: Code sign & export IPA
         script: |
           xcode-project use-profiles
-          cat <<EOF > export_options.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>${BUNDLE_ID}</key>
-              <string>${PROVISIONING_PROFILE}</string>
-            </dict>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>teamID</key>
-            <string>${TEAM_ID}</string>
-          </dict>
-          </plist>
-          EOF
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
-            --scheme Runner \
-            --export-options-plist export_options.plist
+            --scheme Runner
 
     artifacts:
       - build/ios/ipa/*.ipa
