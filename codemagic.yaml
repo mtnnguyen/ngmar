@@ -25,14 +25,14 @@ workflows:
 
       - name: Install certificate & provisioning profile
         script: |
-          echo "🔑 Installing certificate..."
+          echo "Installing certificate..."
           echo "$CERTIFICATE_PASSWORD" | keychain add-certificates --certificate SurveilOne_Distribution.p12
 
-          echo "📄 Installing provisioning profile..."
+          echo "Installing provisioning profile..."
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp "$PROVISIONING_PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
 
-          echo "✅ Installed provisioning profiles:"
+          echo "Installed provisioning profiles:"
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles
 
       - name: Debug installed provisioning profile UUIDs
@@ -45,11 +45,18 @@ workflows:
 
       - name: Build signed IPA
         script: |
-          echo "🚀 Building signed IPA..."
-          xcode-project build-ipa \
-            --workspace ios/Runner.xcworkspace \
-            --scheme Runner \
-            --export-method app-store
+          echo "🚀 Building signed IPA using xcodebuild..."
+
+          xcodebuild -workspace ios/Runner.xcworkspace \
+                     -scheme Runner \
+                     -configuration Release \
+                     -archivePath build/Runner.xcarchive \
+                     archive
+
+          xcodebuild -exportArchive \
+                     -archivePath build/Runner.xcarchive \
+                     -exportOptionsPlist ExportOptions.plist \
+                     -exportPath build/ios/ipa
 
     artifacts:
       - build/ios/ipa/*.ipa
