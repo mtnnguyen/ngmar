@@ -26,8 +26,11 @@ workflows:
       - name: Code sign & export IPA
         script: |
           xcode-project use-profiles
-          xcode-project build-ipa --workspace ios/Runner.xcworkspace --scheme Runner \
-            --export-options-plist /Users/builder/export_options.plist
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme Runner \
+            --export-method app-store \
+            --provisioning-profile "$IOS_PROVISIONING_PROFILE"
 
     artifacts:
       - build/ios/ipa/*.ipa
