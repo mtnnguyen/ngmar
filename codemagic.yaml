@@ -10,6 +10,7 @@ workflows:
       groups:
         - signing
         - app_store_credentials
+
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
@@ -18,12 +19,14 @@ workflows:
         script: |
           echo $CERTIFICATE_BASE64 | base64 --decode > SurveilOne_Distribution.p12
           echo $PROVISION_PROFILE_BASE64 | base64 --decode > SurveilOne_TestFlight_Profile.mobileprovision
+
           security create-keychain -p "" build.keychain
           security import SurveilOne_Distribution.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -A
           security list-keychains -s build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
+
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp SurveilOne_TestFlight_Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
@@ -63,6 +66,7 @@ workflows:
 
     publishing:
       app_store_connect:
-        issuer_id: ${APP_STORE_CONNECT_ISSUER_ID}
-        key_id: ${APP_STORE_CONNECT_KEY_IDENTIFIER}
-        private_key: ${APP_STORE_CONNECT_PRIVATE_KEY}
+        authentication: api_key
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        api_key: $APP_STORE_CONNECT_API_KEY
