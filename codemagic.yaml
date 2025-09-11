@@ -23,15 +23,26 @@ workflows:
       - name: Build iOS app (no codesign yet)
         script: flutter build ios --release --no-codesign
 
-      - name: Install signing assets
+      - name: Install signing assets (with debug logging)
         script: |
-          # Add your uploaded cert & profile to keychain
+          echo "🔑 Initializing keychain..."
           keychain initialize
+          
+          echo "🔑 Adding certificate..."
           keychain add-certificates --certificate SurveilOne_Distribution.p12 --certificate-password "$CERTIFICATE_PASSWORD"
+          echo "✅ Certificate installed."
+
+          echo "📄 Adding provisioning profile..."
           keychain add-profiles --profile "SurveilOne TestFlight Profile"
+          echo "✅ Provisioning profile installed."
+
+          echo "📂 Listing installed certs & profiles..."
+          keychain list-certificates
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles || true
 
       - name: Build IPA with signing
         script: |
+          echo "🚀 Building signed IPA..."
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner \
