@@ -35,6 +35,9 @@ workflows:
           security unlock-keychain -p "" ~/Library/Keychains/build.keychain
           security set-keychain-settings -lut 21600 ~/Library/Keychains/build.keychain
 
+          echo "Verifying installed code signing identities..."
+          security find-identity -v -p codesigning || echo "❌ No valid code signing identities found"
+
           # Decode and install provisioning profile
           echo "Decoding provisioning profile..."
           echo $PROVISION_PROFILE_BASE64 | base64 --decode > SurveilOne_TestFlight_Profile.mobileprovision
