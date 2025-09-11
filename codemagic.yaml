@@ -19,11 +19,12 @@ workflows:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Build iOS release (Codemagic will sign with uploaded certs)
-        script: flutter build ipa --release
+      - name: Build iOS release archive (unsigned, Codemagic will sign)
+        script: flutter build ios --release --no-codesign
 
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios/ipa/*.xcarchive
 
     publishing:
       app_store_connect:
