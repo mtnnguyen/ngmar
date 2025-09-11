@@ -11,13 +11,7 @@ workflows:
       cocoapods: default
       groups:
         - app_store_credentials
-        - signing  # contains P12 password
-
-    certificates:
-      - SurveilOne_Distribution.p12
-
-    provisioning_profiles:
-      - SurveilOne_TestFlight_Profile.mobileprovision
+        - signing  # Contains CERTIFICATE_PASSWORD
 
     scripts:
       - name: Get Flutter dependencies
