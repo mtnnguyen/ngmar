@@ -41,7 +41,7 @@ workflows:
                      DEVELOPMENT_TEAM=$TEAM_ID \
                      archive
 
-          echo "📦 Exporting IPA..."
+          echo "Exporting IPA..."
           xcodebuild -exportArchive \
                      -archivePath build/Runner.xcarchive \
                      -exportOptionsPlist ExportOptions.plist \
