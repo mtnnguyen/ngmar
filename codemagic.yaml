@@ -21,7 +21,6 @@ workflows:
       - name: Install signing certificate & profile manually (with debug)
         script: |
           set -x
-
           echo "Decoding certificate..."
           echo $CERTIFICATE_BASE64 | base64 --decode > SurveilOne_Distribution.p12
           ls -lh SurveilOne_Distribution.p12
@@ -43,14 +42,11 @@ workflows:
 
           echo "✅ Signing certificate & provisioning profile installed."
 
-      - name: Force Runner target to Manual signing
+      - name: Auto-increment build number
         script: |
-          set -x
-          RUNNER_ID="97C146ED1CF9000F007C117D"
-          /usr/libexec/PlistBuddy -c "Add :TargetAttributes:$RUNNER_ID dict" ios/Runner.xcodeproj/project.pbxproj || true
-          /usr/libexec/PlistBuddy -c "Set :TargetAttributes:$RUNNER_ID:ProvisioningStyle Manual" ios/Runner.xcodeproj/project.pbxproj || true
-          /usr/libexec/PlistBuddy -c "Set :TargetAttributes:$RUNNER_ID:DevelopmentTeam $TEAM_ID" ios/Runner.xcodeproj/project.pbxproj || true
-          grep -A5 $RUNNER_ID ios/Runner.xcodeproj/project.pbxproj || true
+          NEW_BUILD_NUMBER=$(date +%s)
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD_NUMBER" ios/Runner/Info.plist
+          echo "Set build number to $NEW_BUILD_NUMBER"
 
       - name: Build iOS app (manual signing enforced)
         script: |
@@ -62,8 +58,12 @@ workflows:
                      -scheme Runner \
                      -configuration Release \
                      -archivePath build/Runner.xcarchive \
+                     -allowProvisioningUpdates \
+                     -destination generic/platform=iOS \
                      DEVELOPMENT_TEAM=$TEAM_ID \
+                     CODE_SIGN_STYLE=Manual \
                      CODE_SIGN_IDENTITY="Apple Distribution" \
+                     PROVISIONING_PROFILE_SPECIFIER="SurveilOne_TestFlight_Profile" \
                      archive
 
           xcodebuild -exportArchive \
