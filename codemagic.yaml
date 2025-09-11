@@ -23,6 +23,11 @@ workflows:
       - name: Build iOS archive (unsigned)
         script: flutter build ios --release --no-codesign
 
+      - name: Install provisioning profiles
+        script: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$CM_PROVISIONING_PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+
       - name: Code sign & export IPA
         script: |
           xcode-project use-profiles
@@ -40,6 +45,8 @@ workflows:
             </dict>
             <key>signingStyle</key>
             <string>manual</string>
+            <key>teamID</key>
+            <string>YOUR_TEAM_ID_HERE</string>
           </dict>
           </plist>
           EOF
