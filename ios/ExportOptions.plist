@@ -11,6 +11,11 @@
   <key>compileBitcode</key>
   <true/>
   <key>signingStyle</key>
-  <string>automatic</string>
+  <string>manual</string>
+  <key>provisioningProfiles</key>
+  <dict>
+    <key>com.surveilone.ngmar</key>
+    <string>SurveilOne_TestFlight_Profile</string>
+  </dict>
 </dict>
 </plist>
