@@ -18,9 +18,7 @@ migrate_working_dir/
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# VS Code (commented out by default)
 #.vscode/
 
 # Flutter/Dart/Pub related
@@ -43,3 +41,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Xcode related
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/Runner.xcodeproj/xcuserdata/
+
+# Keep shared schemes (needed for CI like Codemagic)
+!ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme
