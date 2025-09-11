@@ -18,11 +18,6 @@ workflows:
         script: |
           flutter pub get
 
-      - name: Install CocoaPods
-        script: |
-          cd ios
-          pod install --repo-update
-
       - name: Install signing certificate & profile manually (with debug)
         script: |
           set -x
@@ -33,31 +28,29 @@ workflows:
 
           echo "Creating temporary keychain..."
           security create-keychain -p "" build.keychain
-          security import SurveilOne_Distribution.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -A || echo "❌ CERTIFICATE IMPORT FAILED"
+          security import SurveilOne_Distribution.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -A
           security list-keychains -s ~/Library/Keychains/build.keychain
           security default-keychain -s ~/Library/Keychains/build.keychain
           security unlock-keychain -p "" ~/Library/Keychains/build.keychain
           security set-keychain-settings -lut 21600 ~/Library/Keychains/build.keychain
-
-          echo "Verifying installed code signing identities..."
-          security find-identity -v -p codesigning || echo "❌ No valid code signing identities found"
+          security find-identity -v -p codesigning
 
           echo "Decoding provisioning profile..."
           echo $PROVISION_PROFILE_BASE64 | base64 --decode > SurveilOne_TestFlight_Profile.mobileprovision
           ls -lh SurveilOne_TestFlight_Profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp SurveilOne_TestFlight_Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "❌ PROFILE COPY FAILED"
+          cp SurveilOne_TestFlight_Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
           echo "✅ Signing certificate & provisioning profile installed."
 
-      - name: Force manual signing in project
+      - name: Force Runner target to Manual signing
         script: |
           set -x
-          echo "Switching Runner target to manual signing..."
-          /usr/libexec/PlistBuddy -c "Set :TargetAttributes:1:ProvisioningStyle Manual" ios/Runner.xcodeproj/project.pbxproj || true
-          /usr/libexec/PlistBuddy -c "Add :TargetAttributes:1:DevelopmentTeam string $TEAM_ID" ios/Runner.xcodeproj/project.pbxproj || true
-          /usr/libexec/PlistBuddy -c "Set :TargetAttributes:1:DevelopmentTeam $TEAM_ID" ios/Runner.xcodeproj/project.pbxproj || true
-          grep -A3 ProvisioningStyle ios/Runner.xcodeproj/project.pbxproj || true
+          RUNNER_ID="97C146ED1CF9000F007C117D"
+          /usr/libexec/PlistBuddy -c "Add :TargetAttributes:$RUNNER_ID dict" ios/Runner.xcodeproj/project.pbxproj || true
+          /usr/libexec/PlistBuddy -c "Set :TargetAttributes:$RUNNER_ID:ProvisioningStyle Manual" ios/Runner.xcodeproj/project.pbxproj || true
+          /usr/libexec/PlistBuddy -c "Set :TargetAttributes:$RUNNER_ID:DevelopmentTeam $TEAM_ID" ios/Runner.xcodeproj/project.pbxproj || true
+          grep -A5 $RUNNER_ID ios/Runner.xcodeproj/project.pbxproj || true
 
       - name: Build iOS app (manual signing enforced)
         script: |
@@ -71,7 +64,6 @@ workflows:
                      -archivePath build/Runner.xcarchive \
                      DEVELOPMENT_TEAM=$TEAM_ID \
                      CODE_SIGN_IDENTITY="Apple Distribution" \
-                     PROVISIONING_PROFILE_SPECIFIER="SurveilOne_TestFlight_Profile" \
                      archive
 
           xcodebuild -exportArchive \
