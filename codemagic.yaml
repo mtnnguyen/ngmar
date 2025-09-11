@@ -14,7 +14,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
-        TEAM_ID: "YOUR_TEAM_ID_HERE"   # Replace with your actual 10-character Apple Developer Team ID
+        TEAM_ID: "2JQD483STZ"
 
     scripts:
       - name: Get Flutter dependencies
