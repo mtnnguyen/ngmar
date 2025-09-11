@@ -18,21 +18,31 @@ workflows:
         script: |
           flutter pub get
 
-      - name: Install signing certificate & profile manually
+      - name: Install signing certificate & profile manually (with debug)
         script: |
+          set -x  # echo commands for debugging
+
           # Decode and install certificate (.p12)
+          echo "Decoding certificate..."
           echo $CERTIFICATE_BASE64 | base64 --decode > SurveilOne_Distribution.p12
+          ls -lh SurveilOne_Distribution.p12
+
+          echo "Creating temporary keychain..."
           security create-keychain -p "" build.keychain
-          security import SurveilOne_Distribution.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -A
+          security import SurveilOne_Distribution.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -A || echo "❌ CERTIFICATE IMPORT FAILED"
           security list-keychains -s ~/Library/Keychains/build.keychain
           security default-keychain -s ~/Library/Keychains/build.keychain
           security unlock-keychain -p "" ~/Library/Keychains/build.keychain
           security set-keychain-settings -lut 21600 ~/Library/Keychains/build.keychain
 
           # Decode and install provisioning profile
+          echo "Decoding provisioning profile..."
           echo $PROVISION_PROFILE_BASE64 | base64 --decode > SurveilOne_TestFlight_Profile.mobileprovision
+          ls -lh SurveilOne_TestFlight_Profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp SurveilOne_TestFlight_Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp SurveilOne_TestFlight_Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "❌ PROFILE COPY FAILED"
+
+          echo "✅ Signing certificate & provisioning profile installed."
 
       - name: Build iOS app
         script: |

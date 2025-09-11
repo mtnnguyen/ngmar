@@ -3,25 +3,34 @@
  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <!-- Build method: app-store (TestFlight/App Store) -->
   <key>method</key>
   <string>app-store</string>
 
+  <!-- Explicit provisioning profile mapping -->
   <key>provisioningProfiles</key>
   <dict>
+    <!-- Bundle ID must match exactly -->
     <key>com.surveilone.ngmar</key>
     <string>SurveilOne_TestFlight_Profile</string>
   </dict>
 
+  <!-- Force manual signing to avoid Xcode auto-provisioning -->
   <key>signingStyle</key>
   <string>manual</string>
 
+  <!-- Bitcode & symbols settings -->
   <key>compileBitcode</key>
   <true/>
-
   <key>uploadBitcode</key>
   <false/>
-
   <key>uploadSymbols</key>
   <true/>
+
+  <!-- Debug marker to confirm in logs -->
+  <key>signingCertificate</key>
+  <string>Apple Distribution</string>
+  <key>teamID</key>
+  <string>2JQD483STZ</string>
 </dict>
 </plist>
