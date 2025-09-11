@@ -10,6 +10,7 @@ workflows:
       cocoapods: default
       groups:
         - app_store_credentials
+        - ios_profiles   # ✅ add the group where your provisioning profile lives
 
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
@@ -23,6 +24,11 @@ workflows:
 
       - name: Build iOS archive (unsigned)
         script: flutter build ios --release --no-codesign
+
+      - name: Install provisioning profile
+        script: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$CM_PROVISIONING_PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Code sign & export IPA
         script: |
