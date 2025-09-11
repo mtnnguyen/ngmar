@@ -11,7 +11,7 @@ workflows:
       cocoapods: default
       groups:
         - app_store_credentials
-        - signing   # contains CERTIFICATE_PASSWORD, CERTIFICATE_BASE64, PROVISION_PROFILE_BASE64
+        - signing   # CERTIFICATE_PASSWORD, CERTIFICATE_BASE64, PROVISION_PROFILE_BASE64
 
     scripts:
       - name: Get Flutter dependencies
@@ -20,7 +20,7 @@ workflows:
 
       - name: Install signing certificate & profile manually (with debug)
         script: |
-          set -x  # echo commands for debugging
+          set -x
 
           # Decode and install certificate (.p12)
           echo "Decoding certificate..."
@@ -47,10 +47,29 @@ workflows:
 
           echo "✅ Signing certificate & provisioning profile installed."
 
-      - name: Build iOS app
+      - name: Build iOS app (manual signing enforced)
         script: |
-          flutter build ipa --release \
-            --export-options-plist=ios/ExportOptions.plist
+          set -x
+          echo "Listing installed code signing identities:"
+          security find-identity -v -p codesigning
+          echo "Listing provisioning profiles:"
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/
+
+          # Archive with explicit signing
+          xcodebuild -workspace ios/Runner.xcworkspace \
+                     -scheme Runner \
+                     -configuration Release \
+                     -archivePath build/Runner.xcarchive \
+                     DEVELOPMENT_TEAM=$TEAM_ID \
+                     CODE_SIGN_IDENTITY="Apple Distribution" \
+                     PROVISIONING_PROFILE_SPECIFIER="SurveilOne_TestFlight_Profile" \
+                     archive
+
+          # Export signed IPA
+          xcodebuild -exportArchive \
+                     -archivePath build/Runner.xcarchive \
+                     -exportOptionsPlist ios/ExportOptions.plist \
+                     -exportPath build/ios/ipa
 
     artifacts:
       - build/ios/ipa/*.ipa
