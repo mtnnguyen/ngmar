@@ -15,7 +15,7 @@ workflows:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
         TEAM_ID: "2JQD483STZ"
-        PROVISIONING_PROFILE: "SurveilOne TestFlight Profile"
+        PROVISIONING_PROFILE: "9faa40b6-5dc2-4dfe-a427-8e9676592ce1"
 
     scripts:
       - name: Get Flutter dependencies
