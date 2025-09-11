@@ -14,39 +14,36 @@ workflows:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
         TEAM_ID: "2JQD483STZ"
-        CERTIFICATE_PASSWORD: $CERTIFICATE_PASSWORD
 
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      - name: Build iOS app (no codesign yet)
+      - name: Build iOS app (unsigned)
         script: flutter build ios --release --no-codesign
 
-      - name: Install signing assets (with debug logging)
+      - name: Use provisioning profiles & certificates
         script: |
-          echo "🔑 Initializing keychain..."
-          keychain initialize
-          
-          echo "🔑 Adding certificate..."
-          keychain add-certificates --certificate SurveilOne_Distribution.p12 --certificate-password "$CERTIFICATE_PASSWORD"
-          echo "✅ Certificate installed."
-
-          echo "📄 Adding provisioning profile..."
-          keychain add-profiles --profile "SurveilOne TestFlight Profile"
-          echo "✅ Provisioning profile installed."
-
-          echo "📂 Listing installed certs & profiles..."
-          keychain list-certificates
+          echo "🔑 Installing certs & profiles from Codemagic..."
+          xcode-project use-profiles
+          echo "✅ Installed provisioning profiles:"
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles || true
 
-      - name: Build IPA with signing
+      - name: Debug installed provisioning profile UUIDs
+        script: |
+          echo "📄 Dumping installed provisioning profiles..."
+          for profile in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            echo "---- $profile ----"
+            security cms -D -i "$profile" | grep -A 5 UUID
+            security cms -D -i "$profile" | grep -A 5 Name
+          done
+
+      - name: Build signed IPA
         script: |
           echo "🚀 Building signed IPA..."
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
-            --scheme Runner \
-            --export-method app-store
+            --scheme Runner
 
     artifacts:
       - build/ios/ipa/*.ipa
