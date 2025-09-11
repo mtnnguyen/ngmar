@@ -15,7 +15,6 @@ workflows:
         BUNDLE_ID: "com.surveilone.ngmar"
         APP_STORE_APP_ID: "6752107383"
         TEAM_ID: "2JQD483STZ"
-        PROVISIONING_PROFILE_NAME: "SurveilOne TestFlight Profile"
 
     scripts:
       - name: Get Flutter dependencies
@@ -24,9 +23,18 @@ workflows:
       - name: Build iOS archive (unsigned)
         script: flutter build ios --release --no-codesign
 
+      - name: Install signing assets
+        script: |
+          # Install certificate
+          keychain initialize
+          keychain add-certificates --certificate SurveilOne_Distribution.p12 --password $CERTIFICATE_PASSWORD
+          
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$CM_PROVISIONING_PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+
       - name: Code sign & export IPA
         script: |
-          xcode-project use-profiles
           cat <<EOF > export_options.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -34,18 +42,19 @@ workflows:
           <dict>
             <key>method</key>
             <string>app-store</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>${BUNDLE_ID}</key>
-              <string>${PROVISIONING_PROFILE_NAME}</string>
-            </dict>
             <key>signingStyle</key>
             <string>manual</string>
             <key>teamID</key>
             <string>${TEAM_ID}</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key>
+              <string>SurveilOne TestFlight Profile</string>
+            </dict>
           </dict>
           </plist>
           EOF
+
           xcodebuild \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner \
