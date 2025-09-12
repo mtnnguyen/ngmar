@@ -34,6 +34,17 @@ workflows:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
+      - name: ✅ Sanity check certificate
+        script: |
+          echo "Checking if imported certificate has a private key..."
+          security find-identity -v -p codesigning build.keychain || true
+          
+          if ! security find-identity -v -p codesigning build.keychain | grep "Apple Distribution"; then
+            echo "❌ ERROR: No valid Apple Distribution identity with private key found in keychain."
+            exit 1
+          fi
+          echo "✅ Certificate with private key found."
+
       - name: Build iOS app (manual signing)
         script: |
           flutter build ipa --release \
@@ -49,3 +60,4 @@ workflows:
         apple_id: $APP_STORE_CONNECT_APPLE_ID
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
