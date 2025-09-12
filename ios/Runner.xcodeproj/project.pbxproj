@@ -441,7 +441,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -465,10 +465,10 @@
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
 				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
-				CODE_SIGN_IDENTITY = Apple Distribution;
 			};
 			name = Profile;
 		};
+
 		249021D4217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
