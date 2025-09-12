@@ -10,12 +10,12 @@
   <true/>
   <key>signingStyle</key>
   <string>manual</string>
-  <key>stripSwiftSymbols</key>
-  <true/>
   <key>provisioningProfiles</key>
   <dict>
     <key>com.surveilone.ngmar</key>
-    <string>SurveilOne_TestFlight_Profile</string>
+    <string>9faa40b6-5dc2-4dfe-a427-8e9676592ce1</string>
   </dict>
+  <key>stripSwiftSymbols</key>
+  <true/>
 </dict>
 </plist>

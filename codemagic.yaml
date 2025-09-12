@@ -7,9 +7,9 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: "com.surveilone.ngmar"
+        TEAM_ID: 2JQD483STZ
       groups:
         - signing
-        - app_store_credentials  # Must contain APP_STORE_CONNECT_KEY_IDENTIFIER, ISSUER_ID, API_KEY
 
     scripts:
       - name: Get Flutter dependencies
@@ -53,6 +53,7 @@ workflows:
                      CODE_SIGN_IDENTITY="Apple Distribution" \
                      CODE_SIGN_STYLE=Manual \
                      DEVELOPMENT_TEAM=$TEAM_ID \
+                     PROVISIONING_PROFILE_SPECIFIER="SurveilOne_TestFlight_Profile" \
                      archive
 
           xcodebuild -exportArchive \
@@ -62,9 +63,3 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
-
-    publishing:
-      app_store_connect:
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        api_key: $APP_STORE_CONNECT_API_KEY
