@@ -491,7 +491,7 @@
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
 				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
-				CODE_SIGN_IDENTITY = Apple Distribution;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
 			};
 			name = Profile;
 		};
