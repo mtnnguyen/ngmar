@@ -10,8 +10,8 @@ workflows:
       xcode: 16.4
       cocoapods: default
       groups:
-        - app_store_credentials
-        - signing
+        - app_store_credentials   # contains APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY
+        - signing                 # contains CERTIFICATE_BASE64, CERTIFICATE_PASSWORD, PROVISION_PROFILE_BASE64
 
     scripts:
       - name: Get Flutter dependencies
@@ -60,4 +60,4 @@ workflows:
         apple_id: $APP_STORE_CONNECT_APPLE_ID
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        # ⚠️ private_key is NOT here, it comes from env group app_store_credentials
