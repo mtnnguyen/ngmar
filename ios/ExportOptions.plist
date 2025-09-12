@@ -4,18 +4,26 @@
 <dict>
   <key>method</key>
   <string>app-store</string>
-  <key>uploadBitcode</key>
-  <false/>
-  <key>uploadSymbols</key>
-  <true/>
+
   <key>signingStyle</key>
   <string>manual</string>
+
+  <key>teamID</key>
+  <string>2JQD483STZ</string>
+
   <key>provisioningProfiles</key>
   <dict>
     <key>com.surveilone.ngmar</key>
-    <string>9faa40b6-5dc2-4dfe-a427-8e9676592ce1</string>
+    <string>SurveilOne_TestFlight_Profile</string>
   </dict>
-  <key>stripSwiftSymbols</key>
+
+  <key>compileBitcode</key>
+  <false/>
+
+  <key>uploadBitcode</key>
+  <false/>
+
+  <key>uploadSymbols</key>
   <true/>
 </dict>
 </plist>
