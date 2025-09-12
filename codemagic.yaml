@@ -10,7 +10,6 @@ workflows:
       groups:
         - signing
         - app_store_credentials  # Must contain APP_STORE_CONNECT_KEY_IDENTIFIER, ISSUER_ID, API_KEY
-        - app_store  # Optional: if you need APP_STORE_APP_ID or others
 
     scripts:
       - name: Get Flutter dependencies
