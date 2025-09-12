@@ -2,63 +2,51 @@ workflows:
   ios-testflight-build:
     name: iOS TestFlight Build
     environment:
+      vars:
+        APP_STORE_APP_ID: 6752107383
+        BUNDLE_ID: "com.surveilone.ngmar"
+        TEAM_ID: 2JQD483STZ
       flutter: stable
       xcode: 16.4
       cocoapods: default
-      vars:
-        BUNDLE_ID: "com.surveilone.ngmar"
-        TEAM_ID: 2JQD483STZ
       groups:
+        - app_store_credentials
         - signing
 
     scripts:
       - name: Get Flutter dependencies
-        script: flutter pub get
+        script: |
+          flutter pub get
 
       - name: Install signing certificate & profile
         script: |
-          echo $CERTIFICATE_BASE64 | base64 --decode > SurveilOne_Distribution.p12
-          echo $PROVISION_PROFILE_BASE64 | base64 --decode > SurveilOne_TestFlight_Profile.mobileprovision
+          echo $CERTIFICATE_BASE64 | base64 --decode > /tmp/certificate.p12
+          echo $PROVISION_PROFILE_BASE64 | base64 --decode > /tmp/profile.mobileprovision
 
           security create-keychain -p "" build.keychain
-          security import SurveilOne_Distribution.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -A
-          security list-keychains -s build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
-          security set-keychain-settings -lut 21600 build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          security import /tmp/certificate.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp SurveilOne_TestFlight_Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-
-      - name: Auto-increment build number
-        script: |
-          NEW_BUILD_NUMBER=$(date +%s)
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD_NUMBER" ios/Runner/Info.plist
-          echo "Set build number to $NEW_BUILD_NUMBER"
-
-      - name: Install CocoaPods
-        script: |
-          cd ios
-          pod install
-          cd ..
+          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build iOS app (manual signing)
         script: |
-          set -x
-          xcodebuild -workspace ios/Runner.xcworkspace \
-                     -scheme Runner \
-                     -configuration Release \
-                     -archivePath build/Runner.xcarchive \
-                     -destination generic/platform=iOS \
-                     CODE_SIGN_IDENTITY="Apple Distribution" \
-                     CODE_SIGN_STYLE=Manual \
-                     DEVELOPMENT_TEAM=$TEAM_ID \
-                     archive
-
-          xcodebuild -exportArchive \
-                     -archivePath build/Runner.xcarchive \
-                     -exportOptionsPlist ios/ExportOptions.plist \
-                     -exportPath build/ios/ipa
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios/ipa/*.dSYM.zip
+      - build/ios/ipa/*.log
+
+    publishing:
+      app_store_connect:
+        apple_id: $APP_STORE_CONNECT_APPLE_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
