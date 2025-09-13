@@ -3,8 +3,8 @@ workflows:
     name: iOS TestFlight Build
     environment:
       groups:
-        - signing            # CERTIFICATE_BASE64, CERTIFICATE_PASSWORD, PROVISION_PROFILE_BASE64
-        - apple_store_credentials  # APP_STORE_CONNECT_API_KEY, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_ISSUER_ID
+        - signing               # CERTIFICATE_BASE64, CERTIFICATE_PASSWORD, PROVISION_PROFILE_BASE64
+        - app_store_credentials # APP_STORE_CONNECT_API_KEY, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_ISSUER_ID
       vars:
         APP_STORE_APP_ID: 6752107383
         BUNDLE_ID: "com.surveilone.ngmar"
