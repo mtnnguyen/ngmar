@@ -33,7 +33,6 @@ workflows:
         script: |
           flutter build ipa \
             --release \
-            --no-codesign \
             --export-options-plist=ios/ExportOptions.plist
 
     artifacts:
