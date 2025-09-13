@@ -21,8 +21,9 @@ workflows:
       - name: Decode and install signing certs & profiles
         script: |
           echo "$CERTIFICATE_BASE64" | base64 --decode > /tmp/cert.p12
-          echo "$PROVISION_PROFILE_BASE64" | base64 --decode > /tmp/profile.mobileprovision
+          echo "$PROVISION_PROFILE_BASE64" | base64 --decode > /tmp/SurveilOne_TestFlight_Profile.mobileprovision
 
+          # Create and configure a temporary keychain
           security create-keychain -p "" build.keychain
           security import /tmp/cert.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security list-keychains -s ~/Library/Keychains/build.keychain
@@ -30,8 +31,10 @@ workflows:
           security unlock-keychain -p "" ~/Library/Keychains/build.keychain
           security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain
 
+          # Install provisioning profile with correct filename
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp /tmp/SurveilOne_TestFlight_Profile.mobileprovision \
+             ~/Library/MobileDevice/Provisioning\ Profiles/SurveilOne_TestFlight_Profile.mobileprovision
 
       - name: Build iOS app (manual signing)
         script: |
