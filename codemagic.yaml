@@ -10,14 +10,14 @@ workflows:
       xcode: 16.4
       cocoapods: default
       groups:
-        - app_store_credentials   # contains APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY
+        - app_store_credentials   # contains issuer_id, key_id, private_key
 
     scripts:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
 
-      - name: Build iOS app
+      - name: Build iOS app (manual signing via Codemagic UI profiles)
         script: |
           flutter build ipa --release \
             --export-options-plist=ios/ExportOptions.plist
@@ -29,7 +29,6 @@ workflows:
 
     publishing:
       app_store_connect:
-        apple_id: $APP_STORE_CONNECT_APPLE_ID
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY   # the contents of your .p8 file
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
