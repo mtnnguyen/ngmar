@@ -10,14 +10,44 @@ workflows:
       xcode: 16.4
       cocoapods: default
       groups:
-        - app_store_credentials   # contains APP_STORE_CONNECT_PRIVATE_KEY, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_ISSUER_ID
+        - app_store_credentials   # contains APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY
+        - signing                 # contains CERTIFICATE_BASE64, CERTIFICATE_PASSWORD, PROVISION_PROFILE_BASE64
 
     scripts:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
 
-      - name: Build iOS app (with Codemagic-managed signing)
+      - name: Install signing certificate & profile
+        script: |
+          echo $CERTIFICATE_BASE64 | base64 --decode > /tmp/certificate.p12
+          echo $PROVISION_PROFILE_BASE64 | base64 --decode > /tmp/profile.mobileprovision
+
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          security import /tmp/certificate.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: ✅ Validate cert & provisioning profile
+        script: |
+          echo "Checking if imported certificate has a private key..."
+          security find-identity -v -p codesigning build.keychain || true
+          
+          if ! security find-identity -v -p codesigning build.keychain | grep "Apple Distribution"; then
+            echo "❌ ERROR: No valid Apple Distribution identity with private key found in keychain."
+            exit 1
+          fi
+          echo "Checking provisioning profile..."
+          security cms -D -i /tmp/profile.mobileprovision | plutil -p - | grep -A5 "Entitlements"
+          echo "✅ Certificate + provisioning profile look good."
+
+      - name: Build iOS app (manual signing)
         script: |
           flutter build ipa --release \
             --export-options-plist=ios/ExportOptions.plist
@@ -32,4 +62,4 @@ workflows:
         apple_id: $APP_STORE_CONNECT_APPLE_ID
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
