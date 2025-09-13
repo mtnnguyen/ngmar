@@ -1,26 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
- "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- Distribution method: app-store for TestFlight / App Store -->
     <key>method</key>
     <string>app-store</string>
+
+    <!-- Your Apple team ID -->
     <key>teamID</key>
     <string>2JQD483STZ</string>
-    <key>signingStyle</key>
-    <string>manual</string>
+
+    <!-- Match the provisioning profile you uploaded -->
     <key>provisioningProfiles</key>
     <dict>
         <key>com.surveilone.ngmar</key>
         <string>SurveilOne_TestFlight_Profile</string>
     </dict>
+
+    <!-- Ensure on-device debugging is disabled for release builds -->
     <key>compileBitcode</key>
     <false/>
-    <key>stripSwiftSymbols</key>
+
+    <!-- Sign using your Apple Distribution certificate -->
+    <key>signingCertificate</key>
+    <string>Apple Distribution</string>
+
+    <!-- Make sure Xcode uses manual signing instead of automatic -->
+    <key>signingStyle</key>
+    <string>manual</string>
+
+    <!-- Automatically manage symbols for crash reports -->
+    <key>uploadSymbols</key>
     <true/>
-    <key>destination</key>
-    <string>export</string>
-    <key>thinning</key>
-    <string>&lt;none&gt;</string>
+
+    <!-- Upload bitcode (Apple now ignores it, but keeps compatibility) -->
+    <key>uploadBitcode</key>
+    <false/>
 </dict>
 </plist>
