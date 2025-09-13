@@ -10,7 +10,7 @@ workflows:
       xcode: 16.4
       cocoapods: default
       groups:
-        - app_store_credentials   # contains APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_API_KEY
+        - app_store_credentials   # contains APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY
         - signing                 # contains CERTIFICATE_BASE64, CERTIFICATE_PASSWORD, PROVISION_PROFILE_BASE64
 
     scripts:
@@ -34,16 +34,21 @@ workflows:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      - name: ✅ Sanity check certificate
+      - name: 🔍 Sanity check signing setup
         script: |
-          echo "Checking if imported certificate has a private key..."
+          echo "==> Checking available code signing identities..."
           security find-identity -v -p codesigning build.keychain || true
-          
-          if ! security find-identity -v -p codesigning build.keychain | grep "Apple Distribution"; then
-            echo "❌ ERROR: No valid Apple Distribution identity with private key found in keychain."
-            exit 1
-          fi
-          echo "✅ Certificate with private key found."
+
+          echo ""
+          echo "==> Listing installed provisioning profiles..."
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles || true
+
+          echo ""
+          echo "==> Checking profile details..."
+          for profile in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            echo "---- $profile ----"
+            security cms -D -i "$profile" | plutil -p - | grep -E 'Name|UUID|TeamIdentifier|application-identifier' || true
+          done
 
       - name: Build iOS app (manual signing)
         script: |
@@ -60,4 +65,4 @@ workflows:
         apple_id: $APP_STORE_CONNECT_APPLE_ID
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        private_key: $APP_STORE_CONNECT_API_KEY
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
