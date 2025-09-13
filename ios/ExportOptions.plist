@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
-   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>method</key>
@@ -8,6 +7,15 @@
 
     <key>teamID</key>
     <string>2JQD483STZ</string>
+
+    <key>uploadSymbols</key>
+    <true/>
+
+    <key>uploadBitcode</key>
+    <false/>
+
+    <key>compileBitcode</key>
+    <false/>
 
     <key>signingStyle</key>
     <string>manual</string>
@@ -17,20 +25,5 @@
         <key>com.surveilone.ngmar</key>
         <string>SurveilOne_TestFlight_Profile</string>
     </dict>
-
-    <key>compileBitcode</key>
-    <false/>
-
-    <key>stripSwiftSymbols</key>
-    <true/>
-
-    <key>uploadSymbols</key>
-    <true/>
-
-    <key>uploadBitcode</key>
-    <false/>
-
-    <key>generateAppStoreInformation</key>
-    <true/>
 </dict>
 </plist>

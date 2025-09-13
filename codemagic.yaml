@@ -32,23 +32,24 @@ workflows:
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i /tmp/profile.mobileprovision))
+          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
+          echo "✅ Installed provisioning profile with UUID: $PROFILE_UUID"
 
-      - name: 🔍 Sanity check signing setup
+      - name: ✅ Validate cert & provisioning profile
         script: |
-          echo "==> Checking available code signing identities..."
+          echo "Checking if imported certificate has a private key..."
           security find-identity -v -p codesigning build.keychain || true
 
-          echo ""
-          echo "==> Listing installed provisioning profiles..."
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles || true
+          if ! security find-identity -v -p codesigning build.keychain | grep "Apple Distribution"; then
+            echo "❌ ERROR: No valid Apple Distribution identity with private key found in keychain."
+            exit 1
+          fi
 
-          echo ""
-          echo "==> Checking profile details..."
-          for profile in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
-            echo "---- $profile ----"
-            security cms -D -i "$profile" | plutil -p - | grep -E 'Name|UUID|TeamIdentifier|application-identifier' || true
-          done
+          echo "Checking provisioning profile..."
+          security cms -D -i /tmp/profile.mobileprovision | plutil -p - | grep -A5 "Entitlements"
+
+          echo "✅ Certificate + provisioning profile look good."
 
       - name: Build iOS app (manual signing)
         script: |
@@ -62,7 +63,6 @@ workflows:
 
     publishing:
       app_store_connect:
-        apple_id: $APP_STORE_CONNECT_APPLE_ID
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
