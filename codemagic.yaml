@@ -10,8 +10,8 @@ workflows:
       xcode: 16.4
       cocoapods: default
       groups:
-        - app_store_credentials   # contains APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY
-        - signing                 # contains CERTIFICATE_BASE64, CERTIFICATE_PASSWORD, PROVISION_PROFILE_BASE64
+        - app_store_credentials   # API key, issuer id, key id, private key
+        - signing                 # cert + profile
 
     scripts:
       - name: Get Flutter dependencies
@@ -23,24 +23,25 @@ workflows:
           echo $CERTIFICATE_BASE64 | base64 --decode > /tmp/certificate.p12
           echo $PROVISION_PROFILE_BASE64 | base64 --decode > /tmp/profile.mobileprovision
 
+          # Setup keychain
           security create-keychain -p "" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
 
+          # Import cert
           security import /tmp/certificate.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
 
+          # Install provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i /tmp/profile.mobileprovision))
-          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
-          echo "✅ Installed provisioning profile with UUID: $PROFILE_UUID"
+          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: ✅ Validate cert & provisioning profile
         script: |
-          echo "Checking if imported certificate has a private key..."
+          echo "Checking certificate identity..."
           security find-identity -v -p codesigning build.keychain || true
-
+          
           if ! security find-identity -v -p codesigning build.keychain | grep "Apple Distribution"; then
             echo "❌ ERROR: No valid Apple Distribution identity with private key found in keychain."
             exit 1
@@ -48,8 +49,7 @@ workflows:
 
           echo "Checking provisioning profile..."
           security cms -D -i /tmp/profile.mobileprovision | plutil -p - | grep -A5 "Entitlements"
-
-          echo "✅ Certificate + provisioning profile look good."
+          echo "✅ Cert + provisioning profile look good!"
 
       - name: Build iOS app (manual signing)
         script: |
@@ -63,6 +63,7 @@ workflows:
 
     publishing:
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        api_key: $APP_STORE_CONNECT_API_KEY        # base64 of AuthKey_XXXXX.p8
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
