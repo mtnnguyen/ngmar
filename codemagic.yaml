@@ -33,7 +33,7 @@ workflows:
           PROFILE_NAME=$(security cms -D -i /tmp/profile.mobileprovision | \
             grep -A1 "<key>Name</key>" | sed -n 's:.*<string>\(.*\)</string>.*:\1:p')
           TEAM_IDENTIFIER=$(security cms -D -i /tmp/profile.mobileprovision | \
-            plutil -extract TeamIdentifier raw -o - - 2>/dev/null | head -n 1)
+            plutil -extract TeamIdentifier.0 raw -o - - 2>/dev/null)
           APP_IDENTIFIER=$(security cms -D -i /tmp/profile.mobileprovision | \
             grep -A1 "<key>application-identifier</key>" | sed -n 's:.*<string>\(.*\)</string>.*:\1:p')
 
