@@ -10,48 +10,14 @@ workflows:
       xcode: 16.4
       cocoapods: default
       groups:
-        - app_store_credentials   # API key, issuer id, key id, private key
-        - signing                 # cert + profile
+        - app_store_credentials   # contains APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY
 
     scripts:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
 
-      - name: Install signing certificate & profile
-        script: |
-          echo $CERTIFICATE_BASE64 | base64 --decode > /tmp/certificate.p12
-          echo $PROVISION_PROFILE_BASE64 | base64 --decode > /tmp/profile.mobileprovision
-
-          # Setup keychain
-          security create-keychain -p "" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
-          security set-keychain-settings -t 3600 -u build.keychain
-
-          # Import cert
-          security import /tmp/certificate.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-
-          # Install provisioning profile
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-
-      - name: ✅ Validate cert & provisioning profile
-        script: |
-          echo "Checking certificate identity..."
-          security find-identity -v -p codesigning build.keychain || true
-          
-          if ! security find-identity -v -p codesigning build.keychain | grep "Apple Distribution"; then
-            echo "❌ ERROR: No valid Apple Distribution identity with private key found in keychain."
-            exit 1
-          fi
-
-          echo "Checking provisioning profile..."
-          security cms -D -i /tmp/profile.mobileprovision | plutil -p - | grep -A5 "Entitlements"
-          echo "✅ Cert + provisioning profile look good!"
-
-      - name: Build iOS app (manual signing)
+      - name: Build iOS app
         script: |
           flutter build ipa --release \
             --export-options-plist=ios/ExportOptions.plist
@@ -63,7 +29,7 @@ workflows:
 
     publishing:
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_API_KEY        # base64 of AuthKey_XXXXX.p8
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        apple_id: $APP_STORE_CONNECT_APPLE_ID
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testflight: true
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
