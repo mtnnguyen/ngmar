@@ -10,7 +10,7 @@
   <key>provisioningProfiles</key>
   <dict>
     <key>com.surveilone.ngmar</key>
-    <string>SurveilOne_TestFlight_Profile</string>
+    <string>SurveilOne_TestFlight_Profile_New</string>
   </dict>
   <key>signingCertificate</key>
   <string>Apple Distribution</string>

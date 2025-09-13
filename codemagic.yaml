@@ -2,52 +2,47 @@ workflows:
   ios-testflight-build:
     name: iOS TestFlight Build
     environment:
-      groups:
-        - signing               # CERTIFICATE_BASE64, CERTIFICATE_PASSWORD, PROVISION_PROFILE_BASE64
-        - app_store_credentials # APP_STORE_CONNECT_API_KEY, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_ISSUER_ID
-      vars:
-        APP_STORE_APP_ID: 6752107383
-        BUNDLE_ID: "com.surveilone.ngmar"
-        TEAM_ID: "2JQD483STZ"
       flutter: stable
       xcode: 16.4
       cocoapods: default
+      vars:
+        BUNDLE_ID: "com.surveilone.ngmar"
+        TEAM_ID: "2JQD483STZ"
+        APP_STORE_APP_ID: "6752107383"
+      groups:
+        - signing
+        - app_store_credentials
 
     scripts:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
 
-      - name: Decode and install signing certs & profiles
+      - name: Decode signing files
         script: |
-          echo "$CERTIFICATE_BASE64" | base64 --decode > /tmp/cert.p12
-          echo "$PROVISION_PROFILE_BASE64" | base64 --decode > /tmp/SurveilOne_TestFlight_Profile.mobileprovision
+          echo $CERTIFICATE_BASE64 | base64 --decode > /tmp/cert.p12
+          echo $PROVISION_PROFILE_BASE64 | base64 --decode > /tmp/profile.mobileprovision
 
-          # Create and configure a temporary keychain
           security create-keychain -p "" build.keychain
           security import /tmp/cert.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security list-keychains -s ~/Library/Keychains/build.keychain
-          security default-keychain -s ~/Library/Keychains/build.keychain
-          security unlock-keychain -p "" ~/Library/Keychains/build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain
-
-          # Install provisioning profile with correct filename
+          security list-keychain -d user -s ~/Library/Keychains/build.keychain
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp /tmp/SurveilOne_TestFlight_Profile.mobileprovision \
-             ~/Library/MobileDevice/Provisioning\ Profiles/SurveilOne_TestFlight_Profile.mobileprovision
+          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build iOS app (manual signing)
         script: |
           flutter build ipa \
             --release \
+            --no-codesign \
             --export-options-plist=ios/ExportOptions.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
 
     publishing:
       app_store_connect:
+        apple_id: $APP_STORE_CONNECT_APPLE_ID
         api_key: $APP_STORE_CONNECT_API_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        submit_to_testflight: true
