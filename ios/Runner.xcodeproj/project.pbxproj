@@ -464,7 +464,7 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
-				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
+				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile_New;
 			};
 			name = Profile;
 		};
@@ -490,7 +490,7 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
-				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
+				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile_New;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 			};
 			name = Profile;
@@ -513,7 +513,7 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
-				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
+				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile_New;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 			};
 			name = Debug;
@@ -534,7 +534,7 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
-				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
+				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile_New;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 			};
 			name = Release;
@@ -555,7 +555,7 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
-				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
+				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile_New;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 			};
 			name = Profile;
@@ -617,7 +617,7 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
-				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
+				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile_New;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 			};
 			name = Debug;
@@ -676,7 +676,7 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
-				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
+				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile_New;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 			};
 			name = Release;
@@ -729,7 +729,7 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 2JQD483STZ;
 				PROVISIONING_PROFILE = 9faa40b6-5dc2-4dfe-a427-8e9676592ce1;
-				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile;
+				PROVISIONING_PROFILE_SPECIFIER = SurveilOne_TestFlight_Profile_New;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 			};
 			name = Release;
