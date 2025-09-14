@@ -1,5 +1,5 @@
-name: inbox_app_modular
-description: A modular inbox UI example.
+name: surveilone_ai_agent
+description: SurveilOne AI Agent mobile application.
 version: 1.0.0+1
 
 environment:
@@ -17,6 +17,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -30,3 +31,8 @@ flutter:
     - assets/images/outdoor.png
     - assets/images/phar.png
     - assets/images/timetrack.png
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/logo.png"
