@@ -5,29 +5,20 @@
 <dict>
   <key>method</key>
   <string>app-store</string>
-
   <key>teamID</key>
   <string>2JQD483STZ</string>
-
   <key>provisioningProfiles</key>
   <dict>
     <key>com.surveilone.ngmar</key>
     <string>SurveilOne_TestFlight_Profile_New</string>
   </dict>
-
   <key>signingCertificate</key>
   <string>Apple Distribution</string>
-
   <key>signingStyle</key>
   <string>manual</string>
-
   <key>stripSwiftSymbols</key>
   <true/>
-
   <key>compileBitcode</key>
   <false/>
-
-  <key>destination</key>
-  <string>export</string>
 </dict>
 </plist>

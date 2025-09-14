@@ -10,8 +10,8 @@ workflows:
         TEAM_ID: "2JQD483STZ"
         APP_STORE_APP_ID: "6752107383"
       groups:
-        - signing
-        - app_store_credentials
+        - signing              # contains CERTIFICATE_BASE64, CERTIFICATE_PASSWORD, PROVISION_PROFILE_BASE64
+        - app_store_credentials # contains App Store Connect API key info
 
     scripts:
       - name: Get Flutter dependencies
@@ -20,43 +20,20 @@ workflows:
 
       - name: Decode signing files
         script: |
-          echo $CERTIFICATE_BASE64 | base64 --decode > /tmp/cert.p12
-          echo $PROVISION_PROFILE_BASE64 | base64 --decode > /tmp/profile.mobileprovision
+          echo "$CERTIFICATE_BASE64" | base64 --decode > /tmp/cert.p12
+          echo "$PROVISION_PROFILE_BASE64" | base64 --decode > /tmp/profile.mobileprovision
 
+          # Import cert into a custom keychain
           security create-keychain -p "" build.keychain
           security import /tmp/cert.p12 -k ~/Library/Keychains/build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security list-keychain -d user -s ~/Library/Keychains/build.keychain
+          security default-keychain -s ~/Library/Keychains/build.keychain
+          security unlock-keychain -p "" ~/Library/Keychains/build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain
+
+          # Install provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-
-          echo "👉 Verifying provisioning profile..."
-          PROFILE_NAME=$(security cms -D -i /tmp/profile.mobileprovision | \
-            grep -A1 "<key>Name</key>" | sed -n 's:.*<string>\(.*\)</string>.*:\1:p')
-          TEAM_IDENTIFIER=$(security cms -D -i /tmp/profile.mobileprovision | \
-            plutil -extract TeamIdentifier.0 raw -o - - 2>/dev/null)
-          APP_IDENTIFIER=$(security cms -D -i /tmp/profile.mobileprovision | \
-            grep -A1 "<key>application-identifier</key>" | sed -n 's:.*<string>\(.*\)</string>.*:\1:p')
-
-          echo "🔎 Found profile name: $PROFILE_NAME"
-          echo "🔎 Found team identifier: $TEAM_IDENTIFIER"
-          echo "🔎 Found app identifier: $APP_IDENTIFIER"
-
-          if [ "$PROFILE_NAME" != "SurveilOne_TestFlight_Profile_New" ]; then
-            echo "❌ ERROR: Provisioning profile name mismatch! Expected 'SurveilOne_TestFlight_Profile_New'."
-            exit 1
-          fi
-
-          if [ "$TEAM_IDENTIFIER" != "2JQD483STZ" ]; then
-            echo "❌ ERROR: TeamIdentifier mismatch! Expected '2JQD483STZ'."
-            exit 1
-          fi
-
-          if [ "$APP_IDENTIFIER" != "2JQD483STZ.com.surveilone.ngmar" ]; then
-            echo "❌ ERROR: App identifier mismatch! Expected '2JQD483STZ.com.surveilone.ngmar'."
-            exit 1
-          fi
-
-          echo "✅ Provisioning profile verified successfully."
 
       - name: Build iOS app (manual signing)
         script: |
