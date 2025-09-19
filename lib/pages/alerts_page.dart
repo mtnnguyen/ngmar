@@ -40,7 +40,7 @@ class _AlertsPageState extends State<AlertsPage> {
 
   final String imageHost = kDefaultImageHost;
 
-  // 🔑 Added: key to anchor the popup menu under the filter icon
+  // Key to anchor the popup menu under the filter icon
   final GlobalKey _filterKey = GlobalKey();
 
   @override
@@ -200,8 +200,20 @@ class _AlertTile extends StatelessWidget {
 
   const _AlertTile({required this.index, required this.alert, required this.onTap});
 
-  String _date(DateTime d) => '${d.month}/${d.day}/${d.year}';
+  String _date(DateTime d) {
+    final now = DateTime.now();
+    final isToday = d.year == now.year && d.month == now.month && d.day == now.day;
 
+    if (isToday) {
+      final h = d.hour == 0 ? 12 : (d.hour > 12 ? d.hour - 12 : d.hour);
+      final mm = d.minute.toString().padLeft(2, '0');
+      final ampm = d.hour >= 12 ? 'PM' : 'AM';
+      return '$h:$mm $ampm';
+    } else {
+      return '${d.month}/${d.day}/${d.year}';
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     final img = alert['image_url'] as String?;
@@ -226,13 +238,7 @@ class _AlertTile extends StatelessWidget {
       title: Text(
         alert['title'] ?? 'Alert',
         style: const TextStyle(color: Colors.white),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        alert['preview'] ?? '',
-        style: const TextStyle(color: Colors.white70),
-        maxLines: 1,
+        maxLines: 2, // allow up to 2 lines
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Text(_date(alert['date']), style: const TextStyle(color: Colors.grey)),

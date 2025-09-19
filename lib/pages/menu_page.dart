@@ -192,7 +192,11 @@ class _MenuPageState extends State<MenuPage> {
         ),
         child: Row(
           children: [
-            const CircleAvatar(radius: 28),
+            const CircleAvatar(
+              radius: 28,
+              backgroundColor: Colors.grey, // background circle color
+              child: Icon(Icons.person, color: Colors.white, size: 28),
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -222,28 +226,35 @@ class _MenuPageState extends State<MenuPage> {
       ];
     }
 
-    return licensedProductCodes.map((code) {
-      final meta = productMeta[code];
-      if (meta == null) return const SizedBox.shrink();
+    return [
+      Padding(
+        padding: const EdgeInsets.only(left: 40.0), // adjust until aligned with "My"
+        child: Column(
+          children: licensedProductCodes.map((code) {
+            final meta = productMeta[code];
+            if (meta == null) return const SizedBox.shrink();
 
-      final String title = meta['title'] as String;
-      final String iconPath = meta['icon'] as String;
-      final builder = meta['builder']
-          as Widget Function({
-            required int partyId,
-            required String username,
-            required String password,
-            required String siteName,
-            required String fullName,
-            required String email,
-          });
+            final String title = meta['title'] as String;
+            final String iconPath = meta['icon'] as String;
+            final builder = meta['builder']
+                as Widget Function({
+                  required int partyId,
+                  required String username,
+                  required String password,
+                  required String siteName,
+                  required String fullName,
+                  required String email,
+                });
 
-      return ListTile(
-        leading: Image.asset(iconPath, height: 28),
-        title: Text(title, style: const TextStyle(color: Colors.white)),
-        onTap: () => _navigateTo(context, builder),
-      );
-    }).toList();
+            return ListTile(
+              leading: Image.asset(iconPath, height: 28),
+              title: Text(title, style: const TextStyle(color: Colors.white)),
+              onTap: () => _navigateTo(context, builder),
+            );
+          }).toList(),
+        ),
+      ),
+    ];
   }
 }
 

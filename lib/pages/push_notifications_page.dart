@@ -65,7 +65,19 @@ class _PushNotificationsPageState extends State<PushNotificationsPage> {
     return null;
   }
 
-  String _formatDate(DateTime d) => '${d.month}/${d.day}/${d.year}';
+  String _formatDate(DateTime d) {
+    final now = DateTime.now();
+    final isToday = d.year == now.year && d.month == now.month && d.day == now.day;
+
+    if (isToday) {
+      final h = d.hour == 0 ? 12 : (d.hour > 12 ? d.hour - 12 : d.hour);
+      final mm = d.minute.toString().padLeft(2, '0');
+      final ampm = d.hour >= 12 ? 'PM' : 'AM';
+      return '$h:$mm $ampm';
+    } else {
+      return '${d.month}/${d.day}/${d.year}';
+    }
+  }
 
   String? _pickRawImageField(Map<String, dynamic> a) {
     return (a['image_url'] ?? a['imageUrl'] ?? a['thumbnail'] ?? a['image'] ?? a['img'])?.toString();
@@ -269,10 +281,12 @@ class _NotificationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 8),
-          Text(message, style: const TextStyle(color: Colors.white70)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
