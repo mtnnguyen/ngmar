@@ -34,9 +34,7 @@ class AlertsPage extends StatefulWidget {
 class _AlertsPageState extends State<AlertsPage> {
   final List<Map<String, dynamic>> _alerts = [];
   final ScrollController _scrollCtrl = ScrollController();
-  bool isLoading = true, isFetchingMore = false, hasMore = true;
-  int _limit = 20;
-  int _offset = 0;
+  bool isLoading = true;
 
   final String imageHost = kDefaultImageHost;
 
@@ -47,58 +45,57 @@ class _AlertsPageState extends State<AlertsPage> {
   void initState() {
     super.initState();
     _fetchAlerts();
-    _scrollCtrl.addListener(() {
-      if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 100 && !isFetchingMore && hasMore) {
-        _fetchAlerts();
-      }
-    });
   }
 
   Future<void> _fetchAlerts() async {
-    setState(() => isFetchingMore = true);
     final service = GraphQLService();
     final newAlerts = await service.getAlerts(
       siteName: widget.siteName,
       fromDate: '2025-07-01T00:00:00Z',
       toDate: '2026-08-25T23:59:59Z',
+      recordsPerPage: 50, // grab up to 50 at once
     );
 
     if (newAlerts != null && newAlerts.isNotEmpty) {
-      _alerts.addAll(newAlerts.map((alert) {
-        final rawImg = (alert['image_url'] ?? alert['imageUrl'] ?? alert['thumbnail'])?.toString();
-        return {
-          ...alert,
-          'title': alert['alert_type'] ?? 'Alert',
-          'preview': alert['alert_message_code'] ?? alert['alert_message'] ?? 'No message',
-          'date': _parseDate(alert['created_at'] ?? alert['createdAt']) ?? DateTime.now(),
-          'image_url': normalizeImageUrl(rawImg, imageHost: imageHost, siteName: widget.siteName),
-        };
-      }));
-      _offset += _limit;
+      setState(() {
+        _alerts.clear();
+        _alerts.addAll(newAlerts.map((alert) {
+          final rawImg = (alert['image_url'] ?? alert['imageUrl'] ?? alert['thumbnail'])?.toString();
+          return {
+            ...alert,
+            'title': alert['alert_type'] ?? 'Alert',
+            'preview': alert['alert_message_code'] ?? alert['alert_message'] ?? 'No message',
+            'date': _parseDate(alert['created_at'] ?? alert['createdAt']) ?? DateTime.now(),
+            'image_url': normalizeImageUrl(rawImg, imageHost: imageHost, siteName: widget.siteName),
+          };
+        }));
+        isLoading = false;
+      });
     } else {
-      hasMore = false;
+      setState(() => isLoading = false);
     }
-
-    setState(() {
-      isLoading = false;
-      isFetchingMore = false;
-    });
   }
 
   DateTime? _parseDate(dynamic v) {
     if (v is DateTime) return v.toLocal();
-    if (v is int) return DateTime.fromMillisecondsSinceEpoch(v > 1000000000000 ? v : v * 1000, isUtc: true).toLocal();
+    if (v is int) {
+      return DateTime.fromMillisecondsSinceEpoch(
+        v > 1000000000000 ? v : v * 1000,
+        isUtc: true,
+      ).toLocal();
+    }
     if (v is String) {
-      try { return DateTime.parse(v.replaceFirst('+00:00', 'Z')).toLocal(); } catch (_) {}
+      try {
+        return DateTime.parse(v.replaceFirst('+00:00', 'Z')).toLocal();
+      } catch (_) {}
     }
     return null;
   }
 
   void _sortAlerts(String order) {
     setState(() {
-      _alerts.sort((a, b) => order == 'newest'
-          ? b['date'].compareTo(a['date'])
-          : a['date'].compareTo(b['date']));
+      _alerts.sort((a, b) =>
+          order == 'newest' ? b['date'].compareTo(a['date']) : a['date'].compareTo(b['date']));
     });
   }
 
@@ -113,8 +110,6 @@ class _AlertsPageState extends State<AlertsPage> {
           key: _filterKey,
           icon: const Icon(Icons.filter_list),
           onPressed: () async {
-            // Compute a RelativeRect that matches the icon's position,
-            // so the menu opens directly under it.
             final box = _filterKey.currentContext!.findRenderObject() as RenderBox;
             final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
 
@@ -141,14 +136,30 @@ class _AlertsPageState extends State<AlertsPage> {
           TopRightNavBar(
             onAlertsTap: () => _sortAlerts('newest'),
             onPushTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => PushNotificationsPage(
-                partyId: widget.partyId, username: widget.username, password: widget.password,
-                siteName: widget.siteName, fullName: widget.fullName, email: widget.email)));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => PushNotificationsPage(
+                            partyId: widget.partyId,
+                            username: widget.username,
+                            password: widget.password,
+                            siteName: widget.siteName,
+                            fullName: widget.fullName,
+                            email: widget.email,
+                          )));
             },
             onMenuTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => MenuPage(
-                partyId: widget.partyId, username: widget.username, password: widget.password,
-                siteName: widget.siteName, fullName: widget.fullName, email: widget.email)));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => MenuPage(
+                            partyId: widget.partyId,
+                            username: widget.username,
+                            password: widget.password,
+                            siteName: widget.siteName,
+                            fullName: widget.fullName,
+                            email: widget.email,
+                          )));
             },
           ),
         ],
@@ -156,35 +167,31 @@ class _AlertsPageState extends State<AlertsPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : _alerts.isEmpty
-              ? const Center(child: Text('No alerts found.', style: TextStyle(color: Colors.white)))
+              ? const Center(
+                  child: Text('No alerts found.', style: TextStyle(color: Colors.white)))
               : ListView.builder(
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: _alerts.length + (isFetchingMore ? 1 : 0),
+                  itemCount: _alerts.length,
                   itemBuilder: (context, i) {
-                    if (i >= _alerts.length) {
-                      return const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: CircularProgressIndicator(color: Colors.white)),
-                      );
-                    }
                     return _AlertTile(
                       index: i,
                       alert: _alerts[i],
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => MessageDetailPage(
-                            alerts: _alerts,
-                            currentIndex: i,
-                            onBack: () => Navigator.pop(context),
-                            onMarkAsUnread: () {},
-                            onAlertsTap: () {},
-                            onPushTap: () {},
-                            onMenuTap: () {},
-                            siteName: widget.siteName,
-                            imageHost: imageHost,
-                          ),
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => MessageDetailPage(
+                                      alerts: _alerts,
+                                      currentIndex: i,
+                                      onBack: () => Navigator.pop(context),
+                                      onMarkAsUnread: () {},
+                                      onAlertsTap: () {},
+                                      onPushTap: () {},
+                                      onMenuTap: () {},
+                                      siteName: widget.siteName,
+                                      imageHost: imageHost,
+                                    )));
                       },
                     );
                   },
@@ -213,7 +220,7 @@ class _AlertTile extends StatelessWidget {
       return '${d.month}/${d.day}/${d.year}';
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final img = alert['image_url'] as String?;
@@ -230,7 +237,8 @@ class _AlertTile extends StatelessWidget {
                   width: 56,
                   height: 56,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.broken_image, color: Colors.grey),
                 ),
               )
             : const Icon(Icons.image_not_supported, size: 28, color: Colors.grey),
@@ -238,7 +246,7 @@ class _AlertTile extends StatelessWidget {
       title: Text(
         alert['title'] ?? 'Alert',
         style: const TextStyle(color: Colors.white),
-        maxLines: 2, // allow up to 2 lines
+        maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Text(_date(alert['date']), style: const TextStyle(color: Colors.grey)),
