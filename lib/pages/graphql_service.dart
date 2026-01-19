@@ -4,7 +4,8 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 
 class GraphQLService {
-  // --- Endpoints & API keys ---
+  // --- Endpoints & API keys --- 
+  // THESE ARE EXAMPLES
   static const _signinUrl = 'https://kf6iirlcgrbqdmr2b6nq5s6g3q.appsync-api.ca-central-1.amazonaws.com/graphql';
   static const _signinKey = 'da2-gyewjbxhlvdarogtzp5mbyrm6m';
 
